@@ -1,13 +1,23 @@
-export function field(target, name, descriptor) {
-  descriptor.value.field = true
-  descriptor.enumerable = true
-  return descriptor
+export function field(t, a) {
+  return function (target, name, descriptor) {
+    const { value } = descriptor
+    value.field = true
+    value.type = value.type || t
+    value.args = value.args || a
+    descriptor.enumerable = true
+    return descriptor
+  }
 }
 
-export function mutation(target, name, descriptor) {
-  descriptor.value.mutation = true
-  descriptor.enumerable = true
-  return descriptor
+export function mutation(t, a) {
+  return function (target, name, descriptor) {
+    const { value } = descriptor
+    value.mutation = true
+    value.type = value.type || t
+    value.args = value.args || a
+    descriptor.enumerable = true
+    return descriptor
+  }
 }
 
 export function type(t) {

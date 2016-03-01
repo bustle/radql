@@ -23,15 +23,15 @@ class API extends RadAPI {
     this._foo = foo
   }
 
-  @ field
-  @ type("string")
+  @ field("string")
   foo() {
     return this._foo
   }
 
   @ field
-  @ type("integer")
-  @ args({ arr: [ "number!" ] })
+    ( "integer"
+    , { arr: [ "number!" ] }
+    )
   bar({ arr }) {
     return arr.length
   }
