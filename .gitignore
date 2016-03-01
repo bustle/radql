@@ -1,0 +1,11 @@
+# compiled code
+lib/
+*.zip
+
+# dependencies
+node_modules
+
+# misc
+*.log
+*.swo
+*.swp
