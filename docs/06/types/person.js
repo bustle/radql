@@ -35,12 +35,6 @@ let knows =
 class Person extends RadType {
 
   static description = "A simple person"
-  static args = { name: "string!" }
-
-  constructor(root, { person }) {
-    super(root)
-    this.me = person
-  }
 
   @ service("Person")
   @ args({ name: "string!" })
@@ -49,16 +43,26 @@ class Person extends RadType {
     return person && new this(root, { person })
   }
 
-  @ service("Person")
-  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
-  static create(root, { name, age, knows }) {
-
+  constructor(root, { person }) {
+    super(root)
+    this.me = person
   }
 
   @ service("Person")
-  @ args({ from: "string!", to: "string!" })
-  static meet(root, { from, to }) {
-
+  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
+  static create(root, { name, age, knows: k = [] }) {
+    // check that person does not exist
+    if (people[name])
+      throw new Error("That name is already taken!")
+    // create person POJO
+    const person = { name, age }
+    // resolve KNOWS relationships
+    k.forEach(other => knows[other].push(name))
+    // Save to store
+    people[name] = person
+    knows[name] = k
+    // return new person
+    return new this(root, { person })
   }
 
   @ field("string")

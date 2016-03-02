@@ -200,7 +200,7 @@ export default function ( apis = [], types = [], services = [] ) {
       fields[api.name] =
         { type: gqlType(api.name)
         , description: api.description
-        , args: gqlParseArgs(api.args)
+        , args: gqlParseArgs(api.args || api.get.args)
         , resolve: (_, a, { rootValue: r }) => r.e$[api.name](a)
         }
       return fields

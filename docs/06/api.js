@@ -39,6 +39,12 @@ class API extends RadAPI {
       .then(p => p.birthdays({ num: 1 }))
   }
 
+  @ mutation("Person")
+  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
+  createPerson({ name, age, knows }) {
+    return this.e$.Person.create({ name, age, knows })
+  }
+
 }
 
 export default API

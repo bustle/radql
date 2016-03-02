@@ -56,6 +56,10 @@ export default function(registry, opts = {}) {
         const resolve = function(args) {
           return Promise.resolve(s.get(root, args))
         }
+        for (let key in s) {
+          if (s[key].service)
+            resolve[key] = args => s[key](root, args)
+        }
         // object fields
         return resolve
       }
