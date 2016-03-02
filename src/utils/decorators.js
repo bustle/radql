@@ -22,6 +22,18 @@ export function mutation(t, a) {
   }
 }
 
+export function service(t, a) {
+  return function (target, name, descriptor) {
+    const { value } = descriptor
+    value.service = true
+    value.type = value.type || t
+    value.args = value.args || a
+    descriptor.enumerable = true
+    descriptor.writable = false
+    return descriptor
+  }
+}
+
 export function type(t) {
   return function(target, name, descriptor) {
     descriptor.value.type = t

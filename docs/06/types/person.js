@@ -2,6 +2,7 @@
 
 import { field
        , mutation
+       , service
        , args
        , description
        , RadType
@@ -36,14 +37,28 @@ class Person extends RadType {
   static description = "A simple person"
   static args = { name: "string!" }
 
+  constructor(root, { person }) {
+    super(root)
+    this.me = person
+  }
+
+  @ service("Person")
+  @ args({ name: "string!" })
   static get(root, { name }) {
     const person = people[name]
     return person && new this(root, { person })
   }
 
-  constructor(root, { person }) {
-    super(root)
-    this.me = person
+  @ service("Person")
+  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
+  static create(root, { name, age, knows }) {
+
+  }
+
+  @ service("Person")
+  @ args({ from: "string!", to: "string!" })
+  static meet(root, { from, to }) {
+
   }
 
   @ field("string")

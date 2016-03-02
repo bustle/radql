@@ -54,7 +54,7 @@ export default function(registry, opts = {}) {
     , (s, name) => {
         // object factory
         const resolve = function(args) {
-          return Promise.resolve(s.new(root, args))
+          return Promise.resolve(s.get(root, args))
         }
         // object fields
         return resolve

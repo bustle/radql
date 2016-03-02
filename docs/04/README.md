@@ -52,9 +52,9 @@ class Person extends RadType {
   static description = "A simple person"
   static args = { name: "string!" }
 
-  static new(root, { name }) {
+  static get(root, { name }) {
     const person = people[name]
-    return person && new this(root, { person })
+    return person && get this(root, { person })
   }
 
   constructor(root, { person }) {
@@ -69,8 +69,8 @@ class Person extends RadType {
 export default Person
 ```
 
-The `RadQL` executor actually calls the static `new` method to instantiate an instance of a type/API.
-Our constructor should be used just for initializing fields of our object, while the `new` method is where we place our validation logic.
+The `RadQL` executor actually calls the static `get` method to instantiate an instance of a type/API.
+Our constructor should be used just for initializing fields of our object, while the `get` method is where we place our validation logic.
 
 We now create a new API that exposes both of our types:
 
@@ -126,7 +126,7 @@ All `RadAPI` and `RadType` instances contain a reference to `e$`, which is the c
 This will become very useful when we explore the concept of batching execution, as `e$` is a per-request singleton,
 however for now we're using it to call our factory methods.
 
-Note that `this.e$[TypeName](args)` isn't quite the same as calling `Type.new(args)`.
+Note that `this.e$[TypeName](args)` isn't quite the same as calling `Type.get(args)`.
 `e$` also implements memoization for resource sharing and other features for efficiency.
 This will be explained in greater detail later on in this tutorial when we begin creating data sources
 and explain the full semantics of RadQL factories.

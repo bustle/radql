@@ -29,7 +29,7 @@ class Person extends RadType {
   static description = "A simple person"
   static args = { name: "string!" }
 
-  static new(root, { name }) {
+  static get(root, { name }) {
     const person = people[name]
     return person && new this(root, { person })
   }
