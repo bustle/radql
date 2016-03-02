@@ -121,6 +121,16 @@ class API extends RadAPI {
 export default API
 ```
 
+Notice that our methods use `this.e$`.
+All `RadAPI` and `RadType` instances contain a reference to `e$`, which is the current execution context.
+This will become very useful when we explore the concept of batching execution, as `e$` is a per-request singleton,
+however for now we're using it to call our factory methods.
+
+Note that `this.e$[TypeName](args)` isn't quite the same as calling `Type.new(args)`.
+`e$` also implements memoization for resource sharing and other features for efficiency.
+This will be explained in greater detail later on in this tutorial when we begin creating data sources
+and explain the full semantics of RadQL factories.
+
 We now mount our new API and types:
 
 ```js
