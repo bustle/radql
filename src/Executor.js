@@ -46,16 +46,17 @@ export default function(registry, opts = {}) {
       }
     }
 
+  // root value
   const root = { e$, opts }
   // create object constructors
   const types = _.mapValues
     ( registry.types
     , (s, name) => {
+        // object factory
         const resolve = function(args) {
-          return s.new // if factory method is present
-            ? s.new(root, args)
-            : Promise.resolve(new s(root, args))
+          return Promise.resolve(s.new(root, args))
         }
+        // object fields
         return resolve
       }
     )

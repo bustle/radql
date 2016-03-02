@@ -1,4 +1,7 @@
 export class RadType {
+  static new(root, args) {
+    return new this(root, args)
+  }
   constructor({ e$ }) {
     this.e$ = e$
   }
