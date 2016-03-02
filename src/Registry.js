@@ -53,7 +53,7 @@ export default function ( apis = [], types = [], services = [] ) {
   _.forEach ( services, registerService )
 
   // register types
-  _.forEach ( types, registerType )
+  _.forEach ( _.concat( apis, types ), registerType )
 
   // build schema from APIs
   registry.gqlSchema = Schema()
@@ -123,11 +123,9 @@ export default function ( apis = [], types = [], services = [] ) {
       )
   }
 
-  function gqlAdd(kind) {
-    return function(fields, field, name) {
-      // ignore anything that isn't a field/mutation/ etc.
-      if (!(field[kind]))
-        return fields
+  function gqlAddField(fields, field, name) {
+    // ignore helpers, mutations, etc.
+    if (field.field) {
       // create field
       fields[name] =
         { type:        gqlType(field.type)
@@ -136,8 +134,8 @@ export default function ( apis = [], types = [], services = [] ) {
         , resolve:     ( ctx, args ) =>
                          ctx[name](args)
         }
-      return fields
     }
+    return fields
   }
 
   // registration methods
@@ -148,12 +146,18 @@ export default function ( apis = [], types = [], services = [] ) {
 
   function registerType(t) {
     const { name, description } = t
+    if (registry.types[name]) {
+      if (registry.types[name] === t)
+        return
+      else
+        throw new Error(`ERROR: The type name "${name}" is already in use`)
+    }
     registry.types[name] = t
     const gqlType = new GraphQLObjectType
       ( { name
         , description
         , fields: () => _.reduce
-            ( t.prototype, gqlAdd('field'), {} )
+            ( t.prototype, gqlAddField, {} )
         }
       )
     registry.gql[name] = gqlType
@@ -170,7 +174,12 @@ export default function ( apis = [], types = [], services = [] ) {
 
     const hasMutations = _.reduce
       ( apis
-      , (b, api) => b || ! _.isEmpty( api.mutations )
+      , (b, api) =>
+          b || _.reduce
+            ( api.prototype
+            , (b2, f) => b2 || f.mutation
+            , false
+            )
       , false
       )
 
@@ -188,29 +197,43 @@ export default function ( apis = [], types = [], services = [] ) {
       )
 
     function apiSchema(fields, api) {
-      const gqlType = new GraphQLObjectType
-        ( { name: api.name
-          , description: api.description
-          , fields: () => _.reduce
-              ( api.prototype
-              , gqlAdd('field')
-              , {}
-              )
-          } )
-      registry.gql[api.name] = gqlType
       fields[api.name] =
-        { type: gqlType
+        { type: gqlType(api.name)
         , description: api.description
         , args: gqlParseArgs(api.args)
-        , resolve: (_, a, { rootValue: r }) => new api(r, a)
+        , resolve: (_, a, { rootValue: r }) => r.e$[api.name](a)
         }
       return fields
     }
 
     function apiMutations(fields, api) {
+
+      const baseArgs = gqlParseArgs(api.args)
+
+      // add each mutation to the root mutation fields
       return _.reduce
         ( api.prototype
-        , gqlAdd('mutation')
+        , (fs, f, n) => {
+            // ignore plain fields, helpers, etc.
+            if (f.mutation) {
+              // get mutation args
+              const mArgs = gqlParseArgs(f.args)
+              // merge mutation args with api args
+              const args = baseArgs
+                ? _.assign({}, baseArgs, mArgs)
+                : mArgs
+              // create field
+              fs[`${api.name}__${n}`] =
+                { type:        gqlType(f.type)
+                , description: f.description
+                , args:        args
+                , resolve:     ( __, a, { rootValue: r } ) =>
+                                 r.e$[api.name](a)
+                                  .then(ctx => ctx[n](a))
+                }
+            }
+            return fs
+          }
         , fields
         )
     }

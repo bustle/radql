@@ -20,9 +20,8 @@ npm run doc1
 
 This should start an `express-graphql` server with `GraphiQL` enabled at [localhost:3000/graphql](http://localhost:3000/graphql)
 
-<a href="http://localhost:3000/graphql?query={%0A%20%20HelloWorld%20{%0A%20%20%20%20hello%0A%20%20}%0A}" target="_blank">
-[ Execute this query via GraphiQL ]
-</a>
+### hello world
+
 ```graphql
 {
   HelloWorld {
@@ -30,6 +29,10 @@ This should start an `express-graphql` server with `GraphiQL` enabled at [localh
   }
 }
 ```
+
+<a href="http://localhost:3000/graphql?query={%0A%20%20HelloWorld%20{%0A%20%20%20%20hello%0A%20%20}%0A}" target="_blank">
+[ Execute this query via GraphiQL ]
+</a>
 
 ```json
 {

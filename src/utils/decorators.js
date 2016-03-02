@@ -5,6 +5,7 @@ export function field(t, a) {
     value.type = value.type || t
     value.args = value.args || a
     descriptor.enumerable = true
+    descriptor.writable = false
     return descriptor
   }
 }
@@ -16,6 +17,7 @@ export function mutation(t, a) {
     value.type = value.type || t
     value.args = value.args || a
     descriptor.enumerable = true
+    descriptor.writable = false
     return descriptor
   }
 }

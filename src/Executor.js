@@ -46,7 +46,21 @@ export default function(registry, opts = {}) {
       }
     }
 
-  return e$
+  const root = { e$, opts }
+  // create object constructors
+  const types = _.mapValues
+    ( registry.types
+    , (s, name) => {
+        const resolve = function(args) {
+          return s.new // if factory method is present
+            ? s.new(root, args)
+            : Promise.resolve(new s(root, args))
+        }
+        return resolve
+      }
+    )
+
+  return _.assign(e$, types)
 
   // flushes the job queue
   function dispatchQueue() {

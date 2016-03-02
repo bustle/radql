@@ -1,15 +1,11 @@
-export class RadAPI {
+export class RadType {
   constructor({ e$ }) {
     this.e$ = e$
   }
 }
 
-export class RadType {
-  constructor({ e$ }, attrs) {
-    this.e$ = e$
-    this.attrs = attrs
-  }
-}
+// aliases RadAPI to RadType
+export { RadType as RadAPI }
 
 export class RadService {
   constructor({ e$ }) {

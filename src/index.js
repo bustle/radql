@@ -18,6 +18,7 @@ export default function (apis, types, services, opts) {
 
   function RootValue(req) {
     return { e$: Executor(registry, opts)
+           , opts
            }
   }
 
