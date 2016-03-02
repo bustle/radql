@@ -8,11 +8,12 @@ import { field
        , RadAPI
        } from '../../src'
 
-class API extends RadAPI {
+class HelloWorld extends RadAPI {
 
   static description = "Hello World API"
 
   @ field("string")
+  @ description("Returns \"world\"")
   hello () {
     return "world"
   }
@@ -22,7 +23,7 @@ class API extends RadAPI {
 const { RootValue
       , schema
       , serve
-      } = RadQL([API])
+      } = RadQL([ HelloWorld ])
 
 process.argv.forEach(v => {
 
@@ -46,4 +47,4 @@ process.argv.forEach(v => {
   })
 })
 
-export default serve
+export { serve }

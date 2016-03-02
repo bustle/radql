@@ -36,7 +36,7 @@ export function args(a) {
 
 export function description(d) {
   return function(target, name, descriptor) {
-    descriptor.value.descriptor = d
+    descriptor.value.description = d
     return descriptor
   }
 }
