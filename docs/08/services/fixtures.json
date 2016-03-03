@@ -1,8 +1,6 @@
 {
-  "counter": {
-    "value": 0,
-    "mods": []
-  },
+  "value": 0,
+  "mods": [],
   "person__daria": {
     "name": "daria",
     "age": 17

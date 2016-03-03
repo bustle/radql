@@ -26,6 +26,9 @@ export default function(registry, opts = {}) {
         // not cacheable, move on with our lives
         if (!r.key)
           return enqueue(r)
+        // mutation
+        if (r.busts)
+          return cache[r.src.key][r.key] = enqueue(r)
         // check cache, enqueue if not found
         return cache[r.src.key][r.key]
           || ( cache[r.src.key][r.key] = enqueue(r) )
@@ -91,11 +94,11 @@ export default function(registry, opts = {}) {
 
   // flushes the job queue
   function dispatchQueue() {
-    let n = rtCount++
+    const n = rtCount++
     if (trace)
       console.log(`DISPATCHING Request #${n}`)
     // copy and swap queue
-    const q = queue
+    let q = queue
     queue = []
 
     // group jobs by type
@@ -103,7 +106,7 @@ export default function(registry, opts = {}) {
 
     nextJob = null // copy and swap jobs
     return curJob = Promise.all // map all job groups to their exec fn
-      ( _.map ( jobs, js => js[0].req.src.fetch(js, opts) ) )
+      ( _.map ( jobs, js => js[0].req.src._fetch(js, opts) ) )
       .then(() => {
         if (trace)
           console.log(`DISPATCHED Request #${n}`)

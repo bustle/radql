@@ -31,6 +31,7 @@ export default function (apis, types, services, opts) {
 export { field
        , mutation
        , service
+       , fetch
        , type
        , args
        , description
