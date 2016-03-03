@@ -45,13 +45,6 @@ class API extends RadAPI {
     return this.e$.Person.create({ name, age, knows })
   }
 
-  @ mutation("Person")
-  @ args({ name: "string!", other: "string!" })
-  meet({ name, other }) {
-    return this.e$.Person({ name })
-      .then(p => p.meet({ other }))
-  }
-
 }
 
 export default API

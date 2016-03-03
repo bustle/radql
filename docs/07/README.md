@@ -1,217 +1,205 @@
 # 07. Standalone Services
 
-# TODO: make this section not suck, just skip it honestly...
+What if we want to add persistence to our server?
+We could put I/O in each of our classes, but then our code starts to become convoluted.
 
-What if we want to allow mutations on the `knows` relationship?
-It would be cumbersome to keep adding more methods onto the `Person` type,
-and the method would not generalize to more complicated relationships between types.
+Instead, let's create a `Store` service that handles all of our state.
+Unlike a data type, a service is a singleton and is not reflected in the GraphQL schema.
+A service's sole responsibility is to perform jobs, such as I/O or heavy computations, for the data types.
 
-Consider for example, a graph consisting of `USER` and `POST` where multiple `USER` instances can contribute to a `POST` instance.
+First let's create our `services/store.json` which holds our data:
 
-```
-+------------+         +-----------+
-| USER       |         | POST      |
-+------------+         +-----------+
-| name       |         | content   |
-| posts      |         | authors   |
-+------------+         +-----------+
-```
-
-Adding a new `post` to a user requires mutating the `POST.update` store to accomodate the inverse relationship
-
-```
-+------------+         +-----------+
-| USER       |      ---> POST      |
-+------------+     /   +-----------+
-| name       |    /    | content   |
-| posts      *---/     | authors   |
-+------------+         +-----------+
-```
-
-However, adding a contributor to a `POST` will most likely require calling some sort of `USER.update` method, creating a circular dependency:
-
-```
-+------------+         +-----------+
-| USER       <--\   ---> POST      |
-+------------+   \ /   +-----------+
-| name       |    /    | content   |
-| posts      *---/ \---* authors   |
-+------------+         +-----------+
-```
-
-We could try to fix this by asserting that relationships will only ever be handled on one end, but this becomes difficult to manage as we add more types.
-
-To resolve this, we create a standalone `CONTRIBUTION` service that both `USER` and `POST` sit on top of
-
-
-```
-+--------+--------+
-|  USER  |  POST  |
-|  TYPE  |  TYPE  |
-+----*---+---*----+
-     |       |       
-     |       |       
-+----V-------V----+
-| CONTRIBUTION    |
-| SERVICE         |
-+-----------------+
+```json
+{
+  "value": 0,
+  "mods": [],
+  "person__daria": {
+    "name": "daria",
+    "age": 17
+  },
+  "person__jane": {
+    "name": "jane",
+    "age": 17
+  },
+  "person__quinn": {
+    "name": "quinn",
+    "age": 15
+  },
+  "knows__daria": [
+    "jane",
+    "quinn"
+  ],
+  "knows__jane": [
+    "daria"
+  ],
+  "knows__quinn": [
+    "daria"
+  ]
+}
 ```
 
-Note that this contribution service does not need to know anything about `USER` or `POST`, just that they exist and it must maintain a relationship between the two.
-
-The architecture of a `RadQL` server then becomes:
-
-```
-+----------------+
-| RadQL Executor <--+
-+-------V--------+  |
-| APIs           *--+
-+-------V--------+  |
-| Data Types     *--+
-+-------V--------+  |
-| Services       *---
-+-------V--------+
-| External Libs  |
-+----------------+
-```
-
-All layers can send a message back up to the executor, but know layer knows about itself or its siblings.
-
-In the previous section we introduced the concept of service directives attached to static methods of our types.
-Let's generalize the concept of a service directive to a full standalone service class.
-We will write a `Store` service that manages our in-memory representations of `Person` and the `knows` relationship:
+Notice that our store is just a flat key-value pair. We will be using the same `Store` service for both our `Counter` and `Person` type.
 
 ```js
-// store.js
+// services/store.js
 
-import { field
-       , mutation
+import path from 'path'
+import fs from 'fs'
+
+import { service
        , args
        , description
        , RadService
        } from 'radql'
 
-// in-memory store
-const store =
+const store = path.join(__dirname, 'store.json')
 
-  { people:
-    { "daria":
-      { name: "daria"
-      , age: 17
-      }
-    , "jane":
-      { name: "jane"
-      , age: 17
-      }
-    , "quinn":
-      { name: "quinn"
-      , age: 15
-      }
-    }
+// reads contents of data store
+function read() {
+  return new Promise((resolve, reject) => {
+    fs.readFile(store, (err, data) => {
+      if (err)
+        rejeect(err)
+      else
+        resolve(JSON.parse(data))
+    })
+  })
+}
 
-  , knows:
-    { daria: [ "jane", "quinn" ]
-    , jane: [ "daria" ]
-    , quinn: [ "daria" ]
-    }
-  }
+// writes contents to data store, resolves "ret" as return value
+function write(data, ret) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(store, JSON.stringify(data), (err) => {
+      if (err)
+        reject(err)
+      else
+        resolve(ret)
+    })
+  })
+}
 
-// store service
 class Store extends RadService {
 
-  @ field("object")
-  @ args({ type: "string!", name: "string!" })
+  static description = "Data store"
+
+  @ service("object")
+  @ args({ key: "string!" })
   @ description("Retrieves an object from the store")
-  getObject({ type, name }) {
-    return store[type][name]
+  get({ key }) {
+    return read()
+      .then(data => data[key])
   }
 
-  @ mutation("object")
-  @ args({ type: "string!", name: "string!", payload: "string!" })
-  @ description("Adds an object to the store")
-  addObject({ type, name, payload }) {
-    if (store[type][name])
-      throw new Error("Name already taken!")
-    return store[type][name] = payload
+  @ service("object")
+  @ args({ key: "string!", value: "object!" })
+  @ description("Modifies a value in the store")
+  set({ key, value }) {
+    return read()
+      .then(data => {
+        data[key] = value
+        return write(data, value)
+      })
   }
 
-  @ mutation([ "string" ])
-  @ args({ type: "string!", from: "string!" })
-  @ description("Retrieves adjacencies from the store")
-  getEdges({ type, from }) {
-    return store[type][from] || []
+  @ service("object")
+  @ args({ key: "string!", value: "object!" })
+  @ description("Pushes object to array in store")
+  push({ key, value }) {
+    return read()
+      .then(data => {
+        data[key].push(value)
+        return write(data)
+          .then(() => data[key])
+      })
   }
-
-  @ mutation("string")
-  @ args({ type: "string!", inv: "string", from: "string!", to: "string!" })
-  @ description("Add an adjacency and its inverse, returns parent key")
-  addEdge({ type, inv, from, to }) {
-    // get forward adjacency list
-    const f = store[type][from] = store[type][from] || []
-    // insert edge if it doesn't exist
-    if (!~f.indexOf(to)) f.push(to)
-    // check if inverse type is provided
-    if (inv) {
-      // get backward adjacency list
-      const b = store[inv][to] = store[inv][to] || []
-      // insert edge if it doesn't exist
-      if (!~b.indexOf(from)) b.push(from)
-    }
-    return from
-  }
-
 }
 
 export default Store
 ```
 
-Now after we register our service with RadQL...
+For brevity, we forgo any kind of validations on the `Store` level,
+however in a real application we will probably want to create more specific methods such as
+`insert` and `update` that perform validations.
+
+Also note that our current implementation is horribly inefficient, we will resolve performance concerns in the next section.
+
+We can now modify our `Counter` type to use the new `Store` service, by making calls to `e$.Store.get({ key })` and `e$.Store.set({ key, value })`:
 
 ```js
-// ... index.js
+// ... types/counter.js
 
-import Store   from './store'
+class Counter extends RadType {
 
-const Services =
-  [ Store
-  ]
+  static description = "A simple counter"
 
-const rql = RadQL([ API ], Types, Services)
+  @ field("integer")
+  @ description("The current value of the counter")
+  value() {
+    return this.e$.Store.get({ key: 'value' })
+  }
 
-// ...
+  @ field("number")
+  @ args({ offset: "integer" })
+  @ description("The time of last modification")
+  mod({ offset = 0 } = {}) {
+    return this.e$.Store.get({ key: 'mods' })
+      .then(mods => mods[mods.length - offset - 1])
+  }
+
+  @ mutation("integer")
+  @ args({ amount: "integer!" })
+  @ description("Increment a counter by a given amount")
+  increment({ amount }) {
+    const Store = this.e$.Store
+    return Store.push({ key: 'mods', value: +Date.now() })
+      .then(() => Store.get({ key: 'value' }))
+      .then(value => Store.set({ key: 'value', value: value + amount }))
+  }
+
+}
+
+export default Counter
 ```
 
-... we will be able to shift a lot of our logic from the service directives and mutations of `Person` into the `Store` service.
+We can modify our `Person` type similarly:
 
 ```js
 // ... types/person.js
 
 class Person extends RadType {
 
-  // ...
+  static description = "A simple person"
+
+  constructor(root, person) {
+    super(root)
+    this.me = person
+  }
 
   @ service("Person")
   @ args({ name: "string!" })
   static get(root, { name }) {
-    const Store = root.e$.Store
-    const person = Store.getObject({ type: "people", name })
-    return person && new this(root, { person })
+    return root.e$.Store.get({ key: `person__${name}` })
+      .then(person => new this(root, person))
   }
 
   @ service("Person")
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
   static create(root, { name, age, knows = [] }) {
     const Store = root.e$.Store
-    // create person POJO
     const person = { name, age }
-    Store.addObject({ type: "people", name, payload: person })
-    // resolve KNOWS relationships
-    knows.forEach
-      ( to =>
-          Store.addEdge({ type: "knows", inv: "knows", from: name, to })
-      )
-    // return new person
-    return new this(root, { person })
+    return knows
+      // resolve KNOWS relationships sequentially
+      .reduce
+        ( (prev, curr) =>
+            prev.then( () => Store.push({ key: `knows__${curr}`, value: name }) )
+        , Promise.resolve()
+        )
+      // create KNOWS relationship for new person
+      .then(() => Store.set({ key: `knows__${name}`, value: knows }))
+      // save new person to store
+      .then(() => Store.set({ key: `person__${name}`, value: person }))
+      // return new person
+      .then(() => new this(root, person))
   }
 
   // ...
@@ -220,19 +208,18 @@ class Person extends RadType {
   @ description("List of people known by the specified person")
   knows() {
     const { e$, me } = this
-    return e$.Store.getEdges({ type: "knows", from: me.name })
-      .map(name => e$.Person({ name }))
+    return e$.Store.get({ key: `knows__${me.name}` })
+      .then(names => names.map(name => e$.Person({ name })))
   }
 
-  // ...
-
-  @ mutation("Person")
-  @ args({ other: "string!" })
-  @ description("Add a KNOWS relationship")
-  meet({ other }) {
+  @ mutation("integer")
+  @ args({ num: "integer" })
+  @ description("Increase age by \"num\" (default 1)")
+  birthdays({ num = 1 } = {}) {
     const { e$, me } = this
-    e$.Store.addEdge({ type: "knows", inv: "knows", from: me.name, to: other })
-    return this
+    me.age += num
+    return e$.Store.set({ key: `person__${me.name}`, value: me })
+      .then(() => me.age)
   }
 
 }
@@ -240,128 +227,102 @@ class Person extends RadType {
 export default Person
 ```
 
-Now, instead of talking to the store directly, we run commands on `e$.Store`.
+The same queries as in the previous sections should work.
 
-Now we can expose our new mutation in our API:
-
-```js
-// ... api.js
-
-class API extends RadAPI {
-
-  // ...
-
-  @ mutation("Person")
-  @ args({ name: "string!", other: "string!" })
-  meet({ name, other }) {
-    return this.e$.Person({ name })
-      .then(p => p.meet({ other }))
-  }
-
-}
-
-export default API
-```
-
-### `meet` Mutation
-
-We can now perform the `meet` mutation:
+### Test Mutations
 
 ```graphql
 mutation {
-      API__createPerson(name: "trent", age: 21, knows: ["daria", "jane"]) {
-        name
-        age
-        knows {
-          name
-          age
-        }
-      }
+  i1: API__incrementCounter
+  i2: API__incrementCounter
+  i3: API__incrementCounter
+  API__createPerson(name: "trent", age: 20, knows: [ "jane", "daria" ]) {
+    name
+    age
+    knows {
+      name
+      age
     }
+  }
+  API__birthday(name: "daria")
+}
 ```
-<a href="http://localhost:3000/graphql?query=mutation%20{%0A%20%20API__createPerson%28name%3A%20%22trent%22%2C%20age%3A%2021%2C%20knows%3A%20[%22jane%22]%29%20{%0A%20%20%20%20name%0A%20%20%20%20age%0A%20%20%20%20knows%20{%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20age%0A%20%20%20%20}%0A%20%20}%0A%20%20API__meet%28name%3A%20%22daria%22%2C%20other%3A%20%22trent%22%29%20{%0A%20%20%20%20name%0A%20%20%20%20age%0A%20%20%20%20knows%20{%0A%20%20%20%20%20%20name%0A%20%20%20%20}%0A%20%20}%0A}" target="_blank">
+<a href="http://localhost:3000/graphql?query=mutation%20{%0A%20%20i1%3A%20API__incrementCounter%0A%20%20i2%3A%20API__incrementCounter%0A%20%20i3%3A%20API__incrementCounter%0A%20%20API__createPerson%28name%3A%20%22trent%22%2C%20age%3A%2020%2C%20knows%3A%20[%20%22jane%22%2C%20%22daria%22%20]%29%20{%0A%20%20%20%20name%0A%20%20%20%20age%0A%20%20%20%20knows%20{%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20age%0A%20%20%20%20}%0A%20%20}%0A%20%20API__birthday%28name%3A%20%22daria%22%29%0A}" target="_blank">
   [ Execute this query via GraphiQL ]
 </a>
 ```json
 {
   "data": {
+    "i1": 1,
+    "i2": 2,
+    "i3": 3,
     "API__createPerson": {
       "name": "trent",
-      "age": 21,
+      "age": 20,
       "knows": [
         {
           "name": "jane",
           "age": 17
+        },
+        {
+          "name": "daria",
+          "age": 17
         }
       ]
     },
-    "API__meet": {
-      "name": "daria",
-      "age": 17,
-      "knows": [
-        {
-          "name": "jane"
-        },
-        {
-          "name": "quinn"
-        },
-        {
-          "name": "trent"
-        }
-      ]
-    }
+    "API__birthday": 18
   }
 }
 ```
 
-### Inverse Relationship Check
+### Test Query
 
-And since our `Store.addEdge` method handles inverse edges, `jane` should know `trent` and `trent` should know `daria`
+This query should still return the same value even after restarting the server.
 
 ```graphql
 {
   API {
-    jane: person(name: "jane") {
-      name
-      knows {
-        name
-      }
+    counter {
+      value
+      mod(offset: 2)
     }
-    trent: person(name: "trent") {
+    person(name: "daria") {
       name
+      age
       knows {
         name
+        age
       }
     }
   }
 }
 ```
-<a href="http://localhost:3000/graphql?query={%0A%20%20API%20{%0A%20%20%20%20jane%3A%20person%28name%3A%20%22jane%22%29%20{%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20knows%20{%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20}%0A%20%20%20%20}%0A%20%20%20%20trent%3A%20person%28name%3A%20%22trent%22%29%20{%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20knows%20{%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20}%0A%20%20%20%20}%0A%20%20}%0A}" target="_blank">
+<a href="http://localhost:3000/graphql?query={%0A%20%20API%20{%0A%20%20%20%20counter%20{%0A%20%20%20%20%20%20value%0A%20%20%20%20%20%20mod%28offset%3A%202%29%0A%20%20%20%20}%0A%20%20%20%20person%28name%3A%20%22daria%22%29%20{%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20age%0A%20%20%20%20%20%20knows%20{%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%20%20age%0A%20%20%20%20%20%20}%0A%20%20%20%20}%0A%20%20}%0A}" target="_blank">
   [ Execute this query via GraphiQL ]
 </a>
 ```json
 {
   "data": {
     "API": {
-      "jane": {
-        "name": "jane",
-        "knows": [
-          {
-            "name": "daria"
-          },
-          {
-            "name": "trent"
-          }
-        ]
+      "counter": {
+        "value": 3,
+        "mod": 1457031650582
       },
-      "trent": {
-        "name": "trent",
+      "person": {
+        "name": "daria",
+        "age": 18,
         "knows": [
           {
-            "name": "jane"
+            "name": "jane",
+            "age": 17
           },
           {
-            "name": "daria"
+            "name": "quinn",
+            "age": 15
+          },
+          {
+            "name": "trent",
+            "age": 20
           }
         ]
       }

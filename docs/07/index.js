@@ -12,7 +12,7 @@ const Types =
   , Person
   ]
 
-import Store   from './store'
+import Store   from './services/store'
 
 const Services =
   [ Store
@@ -46,3 +46,21 @@ process.argv.forEach(v => {
 })
 
 export { serve }
+
+// reset for tests
+
+import Promise from 'bluebird'
+import path from 'path'
+import fs from 'fs'
+
+export function reset() {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path.join(__dirname, 'services/fixtures.json'), (e1, data) => {
+      fs.writeFile(path.join(__dirname, 'services/store.json'), data, (e2) => {
+        return (e1 || e2)
+          ? reject(e1 || e2)
+          : resolve()
+      })
+    })
+  })
+}
