@@ -14,7 +14,7 @@ import { field
        , args
        , description
        , RadAPI
-       } from '../../../src'
+       } from 'radql'
 
 let value = 0
 let mods = []

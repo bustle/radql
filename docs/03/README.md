@@ -12,7 +12,7 @@ import { field
        , args
        , description
        , RadAPI
-       } from '../../../src'
+       } from 'radql'
 
 // in-memory person store
 let people =

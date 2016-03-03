@@ -48,10 +48,14 @@ export default function(registry, opts = {}) {
 
   // root value
   const root = { e$, opts }
+  // object store
+  const objects = {}
   // create object constructors
   const types = _.mapValues
     ( registry.types
     , (s, name) => {
+        // create object cache
+        objects[name] = {}
         // object factory
         const resolve = function(args) {
           return Promise.resolve(s.get(root, args))
@@ -62,6 +66,24 @@ export default function(registry, opts = {}) {
         }
         // object fields
         return resolve
+      }
+    )
+
+  // service store
+  const services = {}
+  // bind service getters
+  _.forEach
+    ( registry.services
+    , (s, name) => {
+        Object.defineProperty
+          ( e$
+          , name
+          , { enumerable: true
+            , get() {
+                return services[name]
+                  || ( services[name] = new s(root) )
+              }
+            })
       }
     )
 

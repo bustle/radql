@@ -40,7 +40,6 @@ export default function ( apis = [], types = [], services = [] ) {
     // accessors
     , service
     , type
-    , serviceFor
     , gqlType
 
     // mutators
@@ -80,13 +79,6 @@ export default function ( apis = [], types = [], services = [] ) {
       || type(unwrapList(obj))
       || registry.types[obj]
       || throwError(`Unknown Type: "${obj}"`)
-  }
-
-  function serviceFor(obj) {
-    const s = type(obj).service
-    return (typeof s === "string")
-      ? service(s)
-      : s
   }
 
   function gqlType(obj) {

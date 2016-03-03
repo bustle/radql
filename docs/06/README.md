@@ -16,7 +16,7 @@ import { field
        , mutation
        , service
        // ...
-       } from '../../../src'
+       } from 'radql'
 
 // ...
 
