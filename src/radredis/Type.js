@@ -29,7 +29,7 @@ export default function(source, schema, transforms = {}) {
   // instantiate radredis model
   const Model = Radredis(schema, transforms, source.opts)
 
-  const { title, description } = schema
+  const title = schema.title
   // default 'type' property
   const type = schema.type || title
 
@@ -59,7 +59,8 @@ export default function(source, schema, transforms = {}) {
           ( lazy
           , name
           , { get() {
-                return this.e$[source.name].prop({ m, id: this.id, prop: name })
+                return this.e$[source.name]
+                  .prop({ m, id: this.attrs.id, prop: name })
                   .then(v => deserializeAttr(v, name))
               }
             }
@@ -68,11 +69,8 @@ export default function(source, schema, transforms = {}) {
 
   class RadredisType extends RadType {
 
-    static description = schema.description
-
-    constructor(root, id, attrs) {
+    constructor(root, attrs) {
       super(root)
-      this.id = id
       this.attrs = attrs
     }
 
@@ -85,29 +83,35 @@ export default function(source, schema, transforms = {}) {
       // evalulate strict props
     }
 
-    @ service([ type ])
     @ description(`Retrieves all "${type}"s by an index (radredis)`)
     static all(root, { id }) {
     }
 
-    @ service(type)
+    @ description(`Retrieves all "${type}"s by an index (radredis)`)
+    static all(root, { id }) {
+    }
+
     @ description(`Creates a new "${type}" from given attributes`)
     static create(root, { id }) {
       return Model.create(this.id, {})
         .then(new this(root, id, { something }))
     }
 
-    @ mutation(type)
+    @ field("id!")
+    @ description(`Primary key of current "${type}"`)
+    id() {
+      return this.attrs.id
+    }
+
     @ description(`Update a "${type}" with the given attributes`)
-    update(attrs) {
+    _update(attrs) {
       // diff against strict props
       // perform query
       Model.update(this.id, attrs)
     }
 
-    @ mutation(type)
     @ description(`Delete a "${type}"`)
-    delete() {
+    _delete() {
       // bust cache
       // perform query
       return Model.delete(this.id)
@@ -131,12 +135,12 @@ export default function(source, schema, transforms = {}) {
 
   function deserializeAttr(v, attr) {
     if (!v) return v
-    const type = properties[attr].type
-    if (type === 'array' || type === 'object')
+    const t = properties[attr].type
+    if (t === 'array' || t === 'object')
       return JSON.parse(v)
-    if (type === 'integer')
+    if (t === 'integer')
       return parseInt(v, 10)
-    if (type === 'number' || type === 'float')
+    if (t === 'number' || t === 'float')
       return parseFloat(v, 10)
     return v
   }
