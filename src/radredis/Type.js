@@ -1,3 +1,5 @@
+import _        from 'lodash'
+import Promise  from 'bluebird'
 import Radredis from 'radredis'
 
 import { field
@@ -50,67 +52,32 @@ export default function(source, schema, transforms = {}) {
     .keys()
     .value()
 
-  // lazy loaded attributes
-  const lazy = {}
-  _(properties)
-    .pickBy(p => p.lazy)
-    .forEach
-      ( (attr, name) => Object.defineProperty
-          ( lazy
-          , name
-          , { get() {
-                return this.e$[source.name]
-                  .prop({ m, id: this.attrs.id, prop: name })
-                  .then(v => deserializeAttr(v, name))
-              }
-            }
-          )
-      )
-
-  class RadredisType extends RadType {
+  class Type extends RadType {
 
     constructor(root, attrs) {
       super(root)
       this.attrs = attrs
     }
 
-    lazy = lazy
-
-    @ service(type)
-    @ args({ id: "id!" })
-    @ description(`Retrieves a "${type}" by its id (radredis)`)
-    static get(root, { id }) {
-      // evalulate strict props
+    static get(root, args) {
+      return Type.find(root, args)
+        .then(attrs => attrs && new this(root, attrs))
     }
 
-    @ description(`Retrieves all "${type}"s by an index (radredis)`)
-    static all(root, { id }) {
+    lazy(prop) {
+      return this.attrs[prop]
+        || ( this.attrs[prop] = this.e$[source.name]
+               .prop({ m, prop, id: this.attrs.id })
+               .then(v => deserializeAttr(v, prop))
+           )
     }
 
-    @ description(`Retrieves all "${type}"s by an index (radredis)`)
-    static all(root, { id }) {
-    }
-
-    @ description(`Creates a new "${type}" from given attributes`)
-    static create(root, { id }) {
-      return Model.create(this.id, {})
-        .then(new this(root, id, { something }))
-    }
-
-    @ field("id!")
-    @ description(`Primary key of current "${type}"`)
-    id() {
-      return this.attrs.id
-    }
-
-    @ description(`Update a "${type}" with the given attributes`)
     _update(attrs) {
       // diff against strict props
       // perform query
       Model.update(this.id, attrs)
     }
 
-    @ description(`Delete a "${type}"`)
     _delete() {
       // bust cache
       // perform query
@@ -119,11 +86,27 @@ export default function(source, schema, transforms = {}) {
 
   }
 
-  // lazy load a property
-  function lazyLoad(prop, name) {
-    return this.e$[source.name].prop({ m, prop, id: this.id })
-      .then(v => deserializeProp(prop, v))
+  // utility functions
+  Type.find = function(root, { id }) {
+    return root.e$[source.name].get({ m, id, props })
+      .then( attrs => _.reduce(attrs, (r, a) => r || a, false)
+                   && deserialize(attrs)
+           )
   }
+
+  Type.all = function(root, attrs) {
+
+  }
+
+  Type.range = function(root, attrs) {
+
+  }
+
+  Type.create = function(root, attrs) {
+    return Model.create(attrs)
+  }
+
+  return store[schema.title] = Type
 
   // deserializer
   function deserialize(attrs) {

@@ -2,6 +2,7 @@
 
 import { field
        , mutation
+       , service
        , args
        , description
        , RadType
@@ -22,15 +23,22 @@ const schema =
   }
 
 // generate base class
-const RadBand = Type(source, schema)
+const Radredis = Type(source, schema)
 
-class Band extends RadBand {
+// Band type definition
+class Band extends Radredis {
 
   @ service([ "Band" ])
-  static all = RadBand.all
+  static all = Radredis.all
 
   @ service("Band")
-  static create = RadBand.create
+  static create(root, args) {
+    return Radredis.create(root, args)
+      .then(attrs => new this(root, attrs))
+  }
+
+  @ field("id!")
+  id() { return this.attrs.id }
 
   @ field("string")
   @ description("Name of the band")
@@ -47,7 +55,7 @@ class Band extends RadBand {
   @ field("string")
   @ description("The band's artistic statement")
   statement() {
-     return this.lazy.statement
+    return this.lazy('statement')
   }
 
 }

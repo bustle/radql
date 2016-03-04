@@ -4,18 +4,22 @@ import RadQL   from '../../src'
 
 import API     from './api'
 
+import Band    from './types/band'
 import Counter from './types/counter'
 import Person  from './types/person'
 
 const Types =
-  [ Counter
+  [ Band
+  , Counter
   , Person
   ]
 
-import Store   from './services/store'
+import Store    from './services/store'
+import Radredis from './services/radredis'
 
 const Services =
   [ Store
+  , Radredis
   ]
 
 const { RootValue

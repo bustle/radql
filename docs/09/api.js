@@ -24,6 +24,13 @@ class API extends RadAPI {
     return this.e$.Person({ name })
   }
 
+  @ field("Band")
+  @ args({ id: "id!" })
+  @ description("Find a band by id")
+  band({ id }) {
+    return this.e$.Band({ id })
+  }
+
   @ mutation("integer")
   @ description("Increment our counter by 1")
   incrementCounter() {
@@ -43,6 +50,12 @@ class API extends RadAPI {
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
   createPerson({ name, age, knows }) {
     return this.e$.Person.create({ name, age, knows })
+  }
+
+  @ mutation("Band")
+  @ args({ name: "string", genres: [ "string" ], statement: "string" })
+  createBand(attrs) {
+    return this.e$.Band.create(attrs)
   }
 
 }

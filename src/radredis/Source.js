@@ -2,14 +2,12 @@ import _       from 'lodash'
 import Promise from 'bluebird'
 import Redis   from 'ioredis'
 
-import { field
-       , mutation
-       , service
+import { fetch
        , description
        , args
        } from '../utils/decorators'
 
-import { RadType } from '../utils/types'
+import { RadService } from '../utils/types'
 
 export default function(opts) {
 
@@ -90,6 +88,6 @@ export default function(opts) {
   // define name attribute
   Object.defineProperty(Source, 'name', { value: Source.key })
 
-  return RadredisSource
+  return Source
 
 }
