@@ -1,0 +1,26 @@
+{
+  "value": 0,
+  "mods": [],
+  "person__daria": {
+    "name": "daria",
+    "age": 17
+  },
+  "person__jane": {
+    "name": "jane",
+    "age": 17
+  },
+  "person__quinn": {
+    "name": "quinn",
+    "age": 15
+  },
+  "knows__daria": [
+    "jane",
+    "quinn"
+  ],
+  "knows__jane": [
+    "daria"
+  ],
+  "knows__quinn": [
+    "daria"
+  ]
+}
