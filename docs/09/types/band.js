@@ -1,5 +1,7 @@
 // types/band.js
 
+import Promise from 'bluebird'
+
 import { field
        , mutation
        , service
@@ -15,10 +17,9 @@ import source from '../services/radredis'
 const schema =
   { title: "Band"
   , properties:
-    { name: { type: "string", lazy: true }
-    , rank: { type: "integer", lazy: true }
-    , genres: { type: "array", lazy: true }
-    , statement: { type: "string", lazy: true }
+    { name: { type: "string" }
+    , rank: { type: "integer", index: true }
+    , genres: { type: "array" }
     }
   }
 
@@ -35,8 +36,15 @@ class Band extends Radredis {
       .map(attrs => new this(root, attrs))
   }
 
+  @ service([ "Band" ])
+  @ args({ min: "integer", max: "integer", offset: "integer", limit: "integer" })
+  static top(root, { min = 0, max = 10, offset, limit }) {
+    return Radredis.range(root, { index: 'rank', max, min, offset, limit })
+      .map(attrs => new this(root, attrs))
+  }
+
   @ service("Band")
-  @ args({ name: "string", rank: "integer", genres: [ "string" ] })
+  @ args({ name: "string!", rank: "integer", genres: [ "string" ] })
   static create(root, args) {
     return Radredis.create(root, args)
       .then(attrs => new this(root, attrs))
@@ -57,16 +65,17 @@ class Band extends Radredis {
   @ description("Genres the band identifies as")
   genres() { return this.attr('genres') }
 
-  @ field("string")
-  @ description("The band's artistic statement")
-  statement() {
-    return this.attr('statement')
+  @ mutation("Band")
+  @ args({ name: "string", rank: "integer", genres: [ "string" ] })
+  @ description("Update band values")
+  update({ name, rank, genres }) {
+    return this._update({ name, rank, genres })
   }
 
   @ mutation("Band")
-  @ description("Update band values")
-  update(args) {
-    return this._update(args)
+  @ description("Removes a band from the face of the earth")
+  delete() {
+    return this._delete()
   }
 
 }

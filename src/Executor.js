@@ -21,8 +21,6 @@ export default function(registry, opts = {}) {
   const e$ =
     // DATA FETCHER
     { fetch(r) {
-        // avoid undefined errors
-        if (!cache[r.src.key]) cache[r.src.key] = {}
         // not cacheable, move on with our lives
         if (!r.key)
           return enqueue(r)
@@ -39,26 +37,21 @@ export default function(registry, opts = {}) {
     , map: ( rs, f ) => e$.all( _.map( rs, f ) )
 
     // CACHE BUSTING TOOLS
-    , bustKey: (srcKey, key) => cache[srcKey]
-                           && ( cache[srcKey][key] = null )
+    , bustKey: (srcKey, key) => cache[srcKey][key] = null
     , bustSrc: key => cache[key] = {}
+    , setKey: (srcKey, key, value) => cache[srcKey][key] = value
 
-    // construct an object bound to current e$ instance
-    , new(t, ...args) {
-        registry.type(t)(...args)
-      }
     }
 
   // root value
   const root = { e$, opts }
-  // object store
-  const objects = {}
+
   // create object constructors
   const types = _.mapValues
     ( registry.types
     , (s, name) => {
         // create object cache
-        objects[name] = {}
+        cache[name] = {}
         // object factory
         const resolve = function(args) {
           return Promise.resolve(s.get(root, args))
@@ -78,13 +71,19 @@ export default function(registry, opts = {}) {
   _.forEach
     ( registry.services
     , (s, name) => {
+        // initialize cache
+        if (s.key) cache[s.key] = {}
         Object.defineProperty
           ( e$
           , name
           , { enumerable: true
             , get() {
-                return services[name]
-                  || ( services[name] = new s(root) )
+                if (services[name])
+                  return services[name]
+                const service = new s(root)
+                if (s.key)
+                  service.key = s.key
+                return services[name] = service
               }
             })
       }

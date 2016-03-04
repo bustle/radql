@@ -37,6 +37,12 @@ class API extends RadAPI {
      return this.e$.Band.all(args)
   }
 
+  @ field([ "Band" ])
+  @ args({ limit: "integer", offset: "integer" })
+  topbands(args) {
+    return this.e$.Band.top(args)
+  }
+
   @ mutation("integer")
   @ description("Increment our counter by 1")
   incrementCounter() {
@@ -59,9 +65,23 @@ class API extends RadAPI {
   }
 
   @ mutation("Band")
-  @ args({ name: "string", genres: [ "string" ], statement: "string" })
+  @ args({ name: "string!", rank: "integer", genres: [ "string" ] })
   createBand(attrs) {
     return this.e$.Band.create(attrs)
+  }
+
+  @ mutation("Band")
+  @ args({ id: "id!", name: "string", rank: "integer", genres: [ "string" ] })
+  updateBand({ id, name, rank, genres }) {
+    return this.e$.Band({ id })
+      .then(b => b.update({ name, rank, genres }))
+  }
+
+  @ mutation("Band")
+  @ args({ id: "id!" })
+  deleteBand({ id }) {
+    return this.e$.Band({ id })
+      .then(b => b.delete())
   }
 
 }

@@ -37,8 +37,7 @@ function write(data) {
 class Store extends RadService {
 
   static description = "Data store"
-
-  key = "Store"
+  static key = "Store"
 
   // Executes a list of read/write commands
   _fetch(jobs) {

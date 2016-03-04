@@ -66,5 +66,8 @@ export function reset() {
           : resolve()
       })
     })
+  }).then(() => {
+    const { e$ } = RootValue()
+    return e$.Radredis.redis.flushdb()
   })
 }

@@ -7,11 +7,9 @@ export default function (apis, types, services, opts) {
 
   const registry = Registry(apis, types, services)
   const schema   = registry.gqlSchema
-  const executor = Executor(registry, opts)
 
   return { registry
          , schema
-         , executor
          , RootValue
          , serve
          }

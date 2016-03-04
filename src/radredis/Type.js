@@ -42,26 +42,20 @@ export default function(source, schema, transforms = {}) {
     , schema.properties
     )
 
-
   // model keyspace
   const m = title.toLowerCase()
-
-  // array of strict prop names
-  const props = _(properties)
-    .pickBy(p => !p.lazy)
-    .keys()
-    .value()
 
   class Type extends RadType {
 
     constructor(root, attrs) {
       super(root)
       this._id = attrs.id
-      this._attrs = attrs
+      this._attrs = _.mapValues(attrs, Promise.resolve)
     }
 
-    static get(root, args) {
-      return Type.find(root, args)
+    static get(root, { id }) {
+      return root.e$[source.name]
+        .prop({ m, id, prop: 'id' })
         .then(id => id && new this(root, { id }))
     }
 
@@ -74,25 +68,42 @@ export default function(source, schema, transforms = {}) {
     }
 
     _update(attrs) {
-      // diff against strict props
+      // remove falsey values
+      attrs = _(attrs).omitBy(p => _.isUndefined(p)).omit('id').value()
+      // update caches
+      _.forEach
+        ( attrs
+        , (attr, name) => {
+            // update internal representation
+            this._attrs[name] = this.e$.setKey
+              ( source.key
+              , `${m}:${this._id}:${name}`
+              , Promise.resolve(attr)
+              )
+          }
+        )
       // perform query
       return Model.update(this._id, attrs)
+        // return self
         .return(this)
     }
 
     _delete() {
       // bust cache
+      _.forEach
+        ( this._attrs
+        , (attr, name) => {
+            this.e$.bustKey(source.key, `${m}:${this._id}:${name}`)
+          }
+        )
       // perform query
       return Model.delete(this._id)
+        // create internal representation
+        .then(vals => this._attrs = _.mapValues(vals, Promise.resolve))
+        // return self
         .return(this)
     }
 
-  }
-
-  // utility functions
-  Type.find = function(root, { id }) {
-    return root.e$[source.name]
-      .prop({ m, id, prop: 'id' })
   }
 
   Type.all = function(root, { index = 'id', limit = 30, offset = 0 } = {}) {
