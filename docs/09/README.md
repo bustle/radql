@@ -1,155 +1,132 @@
-# 08. Batching Execution (Solving the N+1 SELECTs Problem)
+# 09. Radredis
 
-Our previous code was pretty inefficient, it constantly reads and writes the same file to the disk.
-Take for example, a nested query:
+RadQL comes bundled with `radredis` and `radgraph` integration out of the box.
+All we need to do is run `npm install --save radredis radgraph`.
+For convenience methods such as promise maps, we will also run `npm install --save bluebird`.
 
-```graphql
-{
-  API {
-    person(name: "daria") { # 1 READ 
-      age                   # |
-      knows {               # 1 + N READS
-        name                # .   | 
-        knows {             # 1 + N + N^2 READS
-          name              # .   .   |
-          knows {           # 1 + N + N^2 + N^3 READS
-            name            # .   .   .     |
-          }
-        }
-      }
+Let's add a new data type, `Band`, that will be managed by `radredis`
+
+### Service
+
+To begin, we create a service that manages our connection to the `radredis` server:
+
+```js
+// services/radredis.js
+
+import { Source } from 'radql/lib/radredis'
+
+const opts =
+  { name: 'Radredis'
+  , db: 2
+  }
+
+export default Source(opts)
+```
+
+This will create a new service, `e$.Radredis`, supporting queries `.index`, `.range`, `.get`, and `.prop`,
+although it is very rare to need to talk to this service directly.
+
+### Schema
+
+```js
+// types/band.js
+
+const schema =
+  { title: "Band"
+  , properties:
+    { name: { type: "string" }
+    , rank: { type: "integer" }
+    , genres: { type: "array" }
+    , statement: { type: "string", lazy: true }
     }
   }
-}
 ```
 
-The number of reads scales linearly with the number of records we're retrieving, however,
-there's no reason why we can't read both `jane` and `quinn` from the same file read after the first `knows` call.
-The trouble is, given our current architecture, `jane` and `quinn` don't have any way of knowing that they're being evaluated in a `knows` context.
+We create a schema for our `Band` type. See the `radredis` documentation for more information.
+Note that we introduce a new property called `lazy`. `lazy` fields will only be fetched if asked for, and are accessed through `this.lazy(name)` rather than `this.attrs[name]`.
 
-Instead of determining how to read our data from the type or service, let's introduce a new layer of abstraction on top of the file itself
-that batches the `get`, `set`, and `push` commands:
+### Type
 
 ```js
-// ... services/store.js
+// ... types/band.js
 
-class Store extends RadService {
+import { field
+       , mutation
+       , service
+       , args
+       , description
+       , RadType
+       } from '../../../src'
 
-  static description = "Data store"
+import { Type } from 'radql/lib/radredis'
+import source from '../services/radredis'
 
-  key = "Store"
+// generate base class
+const Radredis = Type(source, schema)
 
-  // Executes a list of read/write commands
-  _fetch(jobs) {
-    return read() // read store
-      .then(data => {
-        // apply all mutations
-        for (let i = 0; i < jobs.length; i++) {
-          const { type, key, value } = jobs[i].req
-          // apply SET request
-          if (type === 'set')
-            data[key] = value
-          // apply PUSH request
-          if (type === 'push')
-            data[key].push(value)
-        }
-        // write changes to disk
-        return write(data)
-      })
-      .then(data => {
-        // resolve our promises
-        for (let i = 0; i < jobs.length; i++) {
-          const job = jobs[i]
-          job.resolve(data[job.req.key])
-        }
-      })
+// Band type definition
+class Band extends Radredis {
+
+  @ service([ "Band" ])
+  static all(root, args) {
+    return Radredis.all(root, args)
+      .map(attrs => new this(root, attrs))
   }
 
-  _get({ key }) {
-    return { src: this , type: "get" , key }
+  @ service("Band")
+  static create(root, args) {
+    return Radredis.create(root, args)
+      .then(attrs => new this(root, attrs))
   }
 
-  _set({ key, value }) {
-    return { src: this, type: "set", key, value, busts: true }
-  }
+  @ field("id!")
+  id() { return this.attrs.id }
 
-  _push({ key, value }) {
-    return { src: this, type: "push", key, value, busts: true }
-  }
+  @ field("number!")
+  created_at() { return this.attrs.created_at }
 
-  @ service("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get(args) {
-    return this.e$.fetch( this._get(args) )
-  }
+  @ field("string")
+  @ description("Name of the band")
+  name() { return this.attrs.name }
 
-  @ service("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set(args) {
-    return this.e$.fetch( this._set(args) )
-  }
+  @ field("string")
+  @ description("Rank based on Pitchfork reviews")
+  rank() { return this.attrs.rank }
 
-  @ service("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push(args) {
-    return this.e$.fetch( this._push(args) )
+  @ field([ "string" ])
+  @ description("Genres the band identifies as")
+  genres() { return this.attrs.genres }
+
+  @ field("string")
+  @ description("The band's artistic statement")
+  statement() {
+    return this.lazy('statement')
   }
 
 }
 
-export default Store
+export default Band
 ```
 
-We begin by writing a `_fetch` method, whose job is to execute an array of promises.
-RadQL's executor, `e$`, supports a method called `e$.fetch` which pushes a job to a queue
-that gets dispatched at every layer of execution. This way, our query above only requires 4 reads.
+We declare a base class by running `Type(source, schema)`.
+This will create an object which implements our constructor, and provides static helper methods such as
+`Radredis.find`, `Radredis.all`, `Radredis.range`, and `Radredis.create`, as well as creating a prototype
+such as `.attrs`, `.lazy` `._update` and `._delete`.
 
-**CAVEATS**: In the payload, `key` is a special field that is used for caching requests.
-If `key` is present, results will be cached for future use, otherwise, the request is made indiscriminately.
-Similarly, `busts` is a special field that tells our executor to run a request anyways, and replace the cached value.
-The executor also contains methods for more fine-tuned cache control, although the caching mechanism should only be used for simple key-value relationships.
-Indices and pagination should be handled without caching.
+### TODO: Full documentation of Radredis API
 
-However, notice that each of our `get`, `set`, and `push` methods are just thin wrappers over `e$.fetch` to their respective private methods.
-Since this is so common, `RadQL` implements syntactic sugar in the form of a `@ fetch(type)` decorator:
+Let `Model` be be a `Radredis` model, `Radredis` be the result of calling `Type(source, schema)`, and `this` an instance of the data type,
+the following are anologous:
 
-```js
-// ... services/store.js
+- `Radredis.find(root, { id })` performs `Model.find(id)`
+- `Radredis.all(root, { index, offset, limit })`
+- `Radredis.range(root, { index, min, max, offset, limit })`
+- `Radredis.create(root, attrs)` performs `Model.create(attrs)`
+- `this.attrs[name]` returns the value specified
+- `this.lazy(name)` returns a Promise that resolves to the value specified
+- `this._update(attrs)` performs `Model.update(this.attrs.id, attrs)` on the instance, and mutates `this.attrs`
+- `this._delete()` performs `Model.delete(this.attrs.id)` on the instance
 
-import { fetch
-       // ...
-       } from 'radql'
+### TODO: auto-batch .prop calls in Source
 
-class Store extends RadService {
-
-  // ...
-
-  @ fetch("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get({ key }) {
-    return { type: "get" , key }
-  }
-
-  @ fetch("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set({ key, value }) {
-    return { type: "set", key, value, busts: true }
-  }
-
-  @ fetch("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push({ key, value }) {
-    return { type: "push", key, value, busts: true }
-  }
-
-}
-
-export default Store
-```
-
-The same queries as in the previous section should still work as expected.
+Once this happens, every value will be lazy and life will be good.

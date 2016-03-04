@@ -56,18 +56,19 @@ export default function(source, schema, transforms = {}) {
 
     constructor(root, attrs) {
       super(root)
-      this.attrs = attrs
+      this._id = attrs.id
+      this._attrs = attrs
     }
 
     static get(root, args) {
       return Type.find(root, args)
-        .then(attrs => attrs && new this(root, attrs))
+        .then(id => id && new this(root, { id }))
     }
 
-    lazy(prop) {
-      return this.attrs[prop]
-        || ( this.attrs[prop] = this.e$[source.name]
-               .prop({ m, prop, id: this.attrs.id })
+    attr(prop) {
+      return this._attrs[prop]
+        || ( this._attrs[prop] = this.e$[source.name]
+               .prop({ m, prop, id: this._id })
                .then(v => deserializeAttr(v, prop))
            )
     }
@@ -75,31 +76,31 @@ export default function(source, schema, transforms = {}) {
     _update(attrs) {
       // diff against strict props
       // perform query
-      Model.update(this.id, attrs)
+      return Model.update(this._id, attrs)
+        .return(this)
     }
 
     _delete() {
       // bust cache
       // perform query
-      return Model.delete(this.id)
+      return Model.delete(this._id)
+        .return(this)
     }
 
   }
 
   // utility functions
   Type.find = function(root, { id }) {
-    return root.e$[source.name].get({ m, id, props })
-      .then( attrs => _.reduce(attrs, (r, a) => r || a, false)
-                   && deserialize(attrs)
-           )
+    return root.e$[source.name]
+      .prop({ m, id, prop: 'id' })
   }
 
-  Type.all = function(root, attrs) {
-
+  Type.all = function(root, { index = 'id', limit = 30, offset = 0 } = {}) {
+    return Model.all({ index, limit, offset, properties: [ 'id' ] })
   }
 
-  Type.range = function(root, attrs) {
-
+  Type.range = function(root, { index, min, max, limit = 30, offset = 0 } = {}) {
+    return Model.range({ index, limit, offset, min, max, properties: [ 'id' ] })
   }
 
   Type.create = function(root, attrs) {
@@ -109,13 +110,6 @@ export default function(source, schema, transforms = {}) {
   return store[schema.title] = Type
 
   // deserializer
-  function deserialize(attrs) {
-    return _(props)
-      .zipObject(attrs)
-      .mapValues(deserializeAttr)
-      .value()
-  }
-
   function deserializeAttr(v, attr) {
     if (!v) return v
     const t = properties[attr].type

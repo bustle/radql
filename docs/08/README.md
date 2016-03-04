@@ -152,4 +152,25 @@ class Store extends RadService {
 export default Store
 ```
 
-The same queries as in the previous section should still work as expected.
+The same queries as in the previous section should still work as expected,
+however, since our `read` calls are collected and dispatched asynchronously,
+the number of round trips we make now scales linearly:
+
+```graphql
+{
+  API {
+    person(name: "daria") { # 1 READ 
+      age                   # |
+      knows {               # 1 + 2 READS
+        name                # .   | 
+        knows {             # 1 + 2 + 1 READ (hits cache when retrieving people)
+          name              # .   .   |
+          knows {           # 1 + 2 + 1 + 0 READS (hit cache for all data)
+            name            # .   .   .   |
+          }
+        }
+      }
+    }
+  }
+}
+```

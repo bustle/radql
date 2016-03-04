@@ -106,7 +106,7 @@ export default function(registry, opts = {}) {
 
     nextJob = null // copy and swap jobs
     return curJob = Promise.all // map all job groups to their exec fn
-      ( _.map ( jobs, js => js[0].req.src._fetch(js, opts) ) )
+      ( _.map ( jobs, js => js[0].req.src._fetch(js, opts, n) ) )
       .then(() => {
         if (trace)
           console.log(`DISPATCHED Request #${n}`)

@@ -31,6 +31,12 @@ class API extends RadAPI {
     return this.e$.Band({ id })
   }
 
+  @ field([ "Band" ])
+  @ args({ limit: "integer", offset: "integer" })
+  bands(args) {
+     return this.e$.Band.all(args)
+  }
+
   @ mutation("integer")
   @ description("Increment our counter by 1")
   incrementCounter() {

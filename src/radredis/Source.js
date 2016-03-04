@@ -23,12 +23,26 @@ export default function(opts) {
 
     key = opts.name || 'Radredis'
 
-    _fetch(jobs, opts) {
-      const p = this.redis.pipeline()
+    _fetch(jobs, opts, n) {
+      //console.time(`FETCH #${n}`)
+      //console.time(`GROUPING #${n}`)
+      // group jobs
+      jobs = _.map
+        ( _.groupBy(jobs, 'req.item')
+        , (l, item) =>
+            ( { req: { item , props: _.map(l, 'req.prop') }
+              , resolve: vals => _.forEach(l, (job, i) => job.resolve(vals[i]))
+              , reject: err => _.reduce(l, (job, i) => job.reject(err))
+              }
+            )
+        )
+      //console.timeEnd(`GROUPING #${n}`)
+      //console.log(`fetching job ${n} with ${jobs.length} jobs`)
       // build pipeline
+      const p = this.redis.pipeline()
       _.forEach
         ( jobs
-        , j => p[j.req.op](... j.req.args)
+        , j => p.hmget(`${j.req.item}:attributes`, j.req.props)
         )
       p.exec()
         .map(([err, val], i) => {
@@ -38,48 +52,14 @@ export default function(opts) {
           else
             job.resolve(val)
         })
-    }
-
-    @ fetch([ "id!" ])
-    index({ m, index, limit, offset }) {
-      return { op: 'zrevrange'
-             , args: [ `${m}:indexes:${index}`
-                     , offset
-                     , offset + limit - 1
-                     ]
-             }
-    }
-
-    @ fetch([ "id!" ])
-    range({ m, index, min, max, limit, offset }) {
-      return { op: 'zrevrangebyscore'
-             , args: [ `${m}:indexes:${index}`
-                     , max
-                     , min
-                     , 'LIMIT'
-                     , offset
-                     , offset + limit - 1
-                     ]
-             }
-    }
-
-    @ fetch("object")
-    get({ m, id, props }) {
-      return { key: `${m}:${id}`
-             , op: 'hmget'
-             , args: [ `${m}:${id}:attributes`
-                     , props
-                     ]
-             }
+        //.then(() => console.timeEnd(`FETCH #${n}`))
     }
 
     @ fetch("string")
     prop({ m, id, prop }) {
       return { key: `${m}:${id}:${prop}`
-             , op: 'hget'
-             , args: [ `${m}:${id}:attributes`
-                     , prop
-                     ]
+             , item: `${m}:${id}`
+             , prop
              }
     }
 
