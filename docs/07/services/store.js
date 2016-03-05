@@ -3,7 +3,8 @@
 import path from 'path'
 import fs from 'fs'
 
-import { service
+import { field
+       , mutation
        , args
        , description
        , RadService
@@ -37,7 +38,7 @@ class Store extends RadService {
 
   static description = "Data store"
 
-  @ service("object")
+  @ field("object")
   @ args({ key: "string!" })
   @ description("Retrieves an object from the store")
   get({ key }) {
@@ -45,7 +46,7 @@ class Store extends RadService {
       .then(data => data[key])
   }
 
-  @ service("object")
+  @ mutation("object")
   @ args({ key: "string!", value: "object!" })
   @ description("Modifies a value in the store")
   set({ key, value }) {
@@ -57,7 +58,7 @@ class Store extends RadService {
       .then(() => value)
   }
 
-  @ service("object")
+  @ mutation("object")
   @ args({ key: "string!", value: "object!" })
   @ description("Pushes object to array in store")
   push({ key, value }) {

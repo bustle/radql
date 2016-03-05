@@ -7,24 +7,17 @@ What if we wanted to create a new `Person`?
 We could create a new mutation in `api.js` that describes the process for adding a person to the store, however,
 this introduces duplication if we need to be able to create a `Person` from multiple `APIs`.
 
-In order to co-locate our `Person.create` with the rest of `Person`, we introduce the `@ service(type)` decorator:
+In order to co-locate our `Person.create` with the rest of `Person`, we introduce a notation of static fields and mutations
+that can be called from our executor. We call these methods Type Services.
 
 ```js
-// types/person.js
-
-import { field
-       , mutation
-       , service
-       // ...
-       } from 'radql'
-
-// ...
+// ... types/person.js
 
 class Person extends RadType {
 
   // ...
 
-  @ service("Person")
+  @ mutation("Person")
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
   static create(root, { name, age, knows: k = [] }) {
     // check that person does not exist
@@ -49,7 +42,7 @@ class Person extends RadType {
 export default Person
 ```
 
-Note that `get` is really just a service with a special name, and can be annotated as such for self-documenting code.
+Note that `get` is really just a mandatory Type Service with a special name, and can be annotated as such for self-documenting code.
 
 We can now expose our `create` method in our API:
 

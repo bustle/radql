@@ -3,8 +3,7 @@
 import path from 'path'
 import fs from 'fs'
 
-import { service
-       , fetch
+import { fetch
        , args
        , description
        , RadService

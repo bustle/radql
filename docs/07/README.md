@@ -46,7 +46,8 @@ Notice that our store is just a flat key-value pair. We will be using the same `
 import path from 'path'
 import fs from 'fs'
 
-import { service
+import { field
+       , mutation
        , args
        , description
        , RadService
@@ -82,7 +83,7 @@ class Store extends RadService {
 
   static description = "Data store"
 
-  @ service("object")
+  @ field("object")
   @ args({ key: "string!" })
   @ description("Retrieves an object from the store")
   get({ key }) {
@@ -90,7 +91,7 @@ class Store extends RadService {
       .then(data => data[key])
   }
 
-  @ service("object")
+  @ mutation("object")
   @ args({ key: "string!", value: "object!" })
   @ description("Modifies a value in the store")
   set({ key, value }) {
@@ -101,7 +102,7 @@ class Store extends RadService {
       })
   }
 
-  @ service("object")
+  @ mutation("object")
   @ args({ key: "string!", value: "object!" })
   @ description("Pushes object to array in store")
   push({ key, value }) {
@@ -175,14 +176,24 @@ class Person extends RadType {
     this.me = person
   }
 
-  @ service("Person")
+  @ field("Person")
   @ args({ name: "string!" })
   static get(root, { name }) {
     return root.e$.Store.get({ key: `person__${name}` })
       .then(person => new this(root, person))
   }
 
-  @ service("Person")
+  // ...
+
+  @ field([ "Person" ])
+  @ description("List of people known by the specified person")
+  knows() {
+    const { e$, me } = this
+    return e$.Store.get({ key: `knows__${me.name}` })
+      .then(names => names.map(name => e$.Person({ name })))
+  }
+
+  @ mutation("Person")
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
   static create(root, { name, age, knows = [] }) {
     const Store = root.e$.Store
@@ -200,16 +211,6 @@ class Person extends RadType {
       .then(() => Store.set({ key: `person__${name}`, value: person }))
       // return new person
       .then(() => new this(root, person))
-  }
-
-  // ...
-
-  @ field([ "Person" ])
-  @ description("List of people known by the specified person")
-  knows() {
-    const { e$, me } = this
-    return e$.Store.get({ key: `knows__${me.name}` })
-      .then(names => names.map(name => e$.Person({ name })))
   }
 
   @ mutation("integer")

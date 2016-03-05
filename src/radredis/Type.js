@@ -2,13 +2,6 @@ import _        from 'lodash'
 import Promise  from 'bluebird'
 import Radredis from 'radredis'
 
-import { field
-       , mutation
-       , service
-       , description
-       , args
-       } from '../utils/decorators'
-
 import { RadType } from '../utils/types'
 
 const SYSTEM_PROPS =
@@ -41,6 +34,7 @@ export default function(source, schema, transforms = {}) {
     , SYSTEM_PROPS
     , schema.properties
     )
+  const props = _.keys(properties)
 
   // model keyspace
   const m = title.toLowerCase()
@@ -86,6 +80,13 @@ export default function(source, schema, transforms = {}) {
       return Model.update(this._id, attrs)
         // return self
         .return(this)
+    }
+
+    // resolve all fields (for doing better updates)
+    _all() {
+      return Promise.all( _.map(keys, name => this.attr(name) ) )
+        .then(attrs => _.zipObject(props, attrs))
+        .then(all => _.mapValues(all, deserializeAttr))
     }
 
     _delete() {

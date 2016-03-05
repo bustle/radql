@@ -18,7 +18,6 @@ export default function(opts) {
 
     constructor(root) {
       super(root)
-      this.key = Source.key
       // instantiate redis connection
       this.redis = new Redis(opts)
     }

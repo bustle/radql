@@ -75,21 +75,21 @@ class Store extends RadService {
     return { src: this, type: "push", key, value, busts: true }
   }
 
-  @ service("object")
+  @ field("object")
   @ args({ key: "string!" })
   @ description("Retrieves an object from the store")
   get(args) {
     return this.e$.fetch( this._get(args) )
   }
 
-  @ service("object")
+  @ mutation("object")
   @ args({ key: "string!", value: "object!" })
   @ description("Modifies a value in the store")
   set(args) {
     return this.e$.fetch( this._set(args) )
   }
 
-  @ service("object")
+  @ mutation("object")
   @ args({ key: "string!", value: "object!" })
   @ description("Pushes object to array in store")
   push(args) {

@@ -2,7 +2,6 @@
 
 import { field
        , mutation
-       , service
        , args
        , description
        , RadType
@@ -36,33 +35,16 @@ class Person extends RadType {
 
   static description = "A simple person"
 
-  @ service("Person")
-  @ args({ name: "string!" })
-  static get(root, { name }) {
-    const person = people[name]
-    return person && new this(root, { person })
-  }
-
   constructor(root, { person }) {
     super(root)
     this.me = person
   }
 
-  @ service("Person")
-  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
-  static create(root, { name, age, knows: k = [] }) {
-    // check that person does not exist
-    if (people[name])
-      throw new Error("That name is already taken!")
-    // create person POJO
-    const person = { name, age }
-    // resolve KNOWS relationships
-    k.forEach(other => knows[other].push(name))
-    // Save to store
-    people[name] = person
-    knows[name] = k
-    // return new person
-    return new this(root, { person })
+  @ field("Person")
+  @ args({ name: "string!" })
+  static get(root, { name }) {
+    const person = people[name]
+    return person && new this(root, { person })
   }
 
   @ field("string")
@@ -83,6 +65,23 @@ class Person extends RadType {
     const { e$, me } = this
     return knows[me.name]
       .map(name => e$.Person({ name }))
+  }
+
+  @ mutation("Person")
+  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
+  static create(root, { name, age, knows: k = [] }) {
+    // check that person does not exist
+    if (people[name])
+      throw new Error("That name is already taken!")
+    // create person POJO
+    const person = { name, age }
+    // resolve KNOWS relationships
+    k.forEach(other => knows[other].push(name))
+    // Save to store
+    people[name] = person
+    knows[name] = k
+    // return new person
+    return new this(root, { person })
   }
 
   @ mutation("integer")

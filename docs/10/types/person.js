@@ -12,36 +12,18 @@ class Person extends RadType {
 
   static description = "A simple person"
 
-  @ field("Person")
-  @ args({ name: "string!" })
-  static get(root, { name }) {
-    return root.e$.Store.get({ key: `person__${name}` })
-      .then(person => new this(root, person))
-  }
-
   constructor(root, person) {
     super(root)
     this.me = person
   }
 
-  @ field("string")
-  @ description("The name of the specified person")
-  name() {
-    return this.me.name
-  }
+  // TYPE SERVICE
 
-  @ field("integer")
-  @ description("The age of the specified person")
-  age() {
-    return this.me.age
-  }
-
-  @ field([ "Person" ])
-  @ description("List of people known by the specified person")
-  knows() {
-    const { e$, me } = this
-    return e$.Store.get({ key: `knows__${me.name}` })
-      .then(names => names.map(name => e$.Person({ name })))
+  @ field("Person")
+  @ args({ name: "string!" })
+  static get(root, { name }) {
+    return root.e$.Store.get({ key: `person__${name}` })
+      .then(person => new this(root, person))
   }
 
   @ mutation("Person")
@@ -62,6 +44,28 @@ class Person extends RadType {
       .then(() => Store.set({ key: `person__${name}`, value: person }))
       // return new person
       .then(() => new this(root, person))
+  }
+
+  // ATTRIBUTES
+
+  @ field("string")
+  @ description("The name of the specified person")
+  name() {
+    return this.me.name
+  }
+
+  @ field("integer")
+  @ description("The age of the specified person")
+  age() {
+    return this.me.age
+  }
+
+  @ field([ "Person" ])
+  @ description("List of people known by the specified person")
+  knows() {
+    const { e$, me } = this
+    return e$.Store.get({ key: `knows__${me.name}` })
+      .then(names => names.map(name => e$.Person({ name })))
   }
 
   @ mutation("integer")

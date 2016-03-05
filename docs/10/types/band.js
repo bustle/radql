@@ -4,6 +4,7 @@ import Promise from 'bluebird'
 
 import { field
        , mutation
+       , service
        , args
        , description
        , RadType
@@ -28,21 +29,21 @@ const Radredis = Type(source, schema)
 // Band type definition
 class Band extends Radredis {
 
-  @ field([ "Band" ])
+  @ service([ "Band" ])
   @ args({ index: "string", offset: "integer", limit: "integer" })
   static all(root, args) {
     return Radredis.all(root, args)
       .map(attrs => new this(root, attrs))
   }
 
-  @ field([ "Band" ])
+  @ service([ "Band" ])
   @ args({ min: "integer", max: "integer", offset: "integer", limit: "integer" })
   static top(root, { min = 0, max = 10, offset, limit }) {
     return Radredis.range(root, { index: 'rank', max, min, offset, limit })
       .map(attrs => new this(root, attrs))
   }
 
-  @ mutation("Band")
+  @ service("Band")
   @ args({ name: "string!", rank: "integer", genres: [ "string" ] })
   static create(root, args) {
     return Radredis.create(root, args)
