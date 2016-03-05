@@ -62,37 +62,28 @@ class Store extends RadService {
       })
   }
 
-  _get({ key }) {
+  _get(key) {
     return { src: this , type: "get" , key }
   }
 
-  _set({ key, value }) {
+  _set(key, value) {
     return { src: this, type: "set", key, value, busts: true }
   }
 
-  _push({ key, value }) {
+  _push(key, value) {
     return { src: this, type: "push", key, value, busts: true }
   }
 
-  @ field("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get(args) {
-    return this.e$.fetch( this._get(args) )
+  get(...args) {
+    return this.e$.fetch( this._get(...args) )
   }
 
-  @ mutation("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set(args) {
-    return this.e$.fetch( this._set(args) )
+  set(...args) {
+    return this.e$.fetch( this._set(...args) )
   }
 
-  @ mutation("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push(args) {
-    return this.e$.fetch( this._push(args) )
+  push(...args) {
+    return this.e$.fetch( this._push(...args) )
   }
 
 }
@@ -111,7 +102,7 @@ The executor also contains methods for more fine-tuned cache control, although t
 Indices and pagination should be handled without caching.
 
 However, notice that each of our `get`, `set`, and `push` methods are just thin wrappers over `e$.fetch` to their respective private methods.
-Since this is so common, `RadQL` implements syntactic sugar in the form of a `@ fetch(type)` decorator:
+Since this is so common, `RadQL` implements syntactic sugar in the form of a `@fetch` decorator:
 
 ```js
 // ... services/store.js
@@ -124,24 +115,18 @@ class Store extends RadService {
 
   // ...
 
-  @ fetch("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get({ key }) {
+  @ fetch
+  get(key) {
     return { type: "get" , key }
   }
 
-  @ fetch("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set({ key, value }) {
+  @ fetch
+  set(key, value) {
     return { type: "set", key, value, busts: true }
   }
 
-  @ fetch("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push({ key, value }) {
+  @ fetch
+  push(key, value) {
     return { type: "push", key, value, busts: true }
   }
 

@@ -14,7 +14,6 @@ export default function(opts) {
   class Source extends RadService {
 
     static opts = opts
-    static key = opts.name || 'Radredis'
 
     constructor(root) {
       super(root)
@@ -31,27 +30,29 @@ export default function(opts) {
 
     }
 
-    @ fetch([ "string" ])
-    from ({ m, from, limit, offset }) {
+    @ fetch
+    from (m, from, { limit, offset }) {
 
     }
 
-    @ fetch([ "string" ])
-    all ({ m, from, to, limit, offset }) {
+    @ fetch
+    all (m, from, to, { limit, offset }) {
     }
 
-    @ fetch("number")
-    check ({ m, from, to, time }) {
+    @ fetch
+    check (m, from, to, time) {
 
     }
 
-    @ fetch("string")
-    attr ({ m, from, to, time, attr }) {
+    @ fetch
+    attr (m, from, to, time, attr) {
 
     }
 
   }
 
-  Object.defineProperty(Source, 'name', { value: Source.key })
+  Object.defineProperty(Source, 'name', { value: opts.name || 'Radgraph' })
+
+  return Source
 
 }

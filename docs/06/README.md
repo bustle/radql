@@ -7,8 +7,11 @@ What if we wanted to create a new `Person`?
 We could create a new mutation in `api.js` that describes the process for adding a person to the store, however,
 this introduces duplication if we need to be able to create a `Person` from multiple `APIs`.
 
-In order to co-locate our `Person.create` with the rest of `Person`, we introduce a notation of static fields and mutations
-that can be called from our executor. We call these methods Type Services.
+In order to co-locate our `Person.create` with the rest of `Person`, we introduce the `@ service` decorator.
+This allows a static method to be bound by our executor when we ask for `e$.Person`
+
+Note that since services are meant for internal use only, they do not require GraphQL type annotations, and are not restricted to a single `args` parameter,
+although the first argument will always be the execution context, `root`.
 
 ```js
 // ... types/person.js
@@ -19,7 +22,7 @@ class Person extends RadType {
 
   @ mutation("Person")
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
-  static create(root, { name, age, knows: k = [] }) {
+  static create(root, name, age, k = []) {
     // check that person does not exist
     if (people[name])
       throw new Error("That name is already taken!")
@@ -56,13 +59,15 @@ class API extends RadAPI {
   @ mutation("Person")
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
   createPerson({ name, age, knows }) {
-    return this.e$.Person.create({ name, age, knows })
+    return this.e$.Person.create(name, age, knows)
   }
 
 }
 
 export default API
 ```
+
+Notice that we did not pass in `root` as a first argument, as the executor will automatically pass this in for us.
 
 ### Create Person Query
 

@@ -46,16 +46,10 @@ Notice that our store is just a flat key-value pair. We will be using the same `
 import path from 'path'
 import fs from 'fs'
 
-import { field
-       , mutation
-       , args
-       , description
-       , RadService
-       } from 'radql'
+import { RadService } from '../../../src'
 
 const store = path.join(__dirname, 'store.json')
 
-// reads contents of data store
 function read() {
   return new Promise((resolve, reject) => {
     fs.readFile(store, (err, data) => {
@@ -67,14 +61,13 @@ function read() {
   })
 }
 
-// writes contents to data store, resolves "ret" as return value
-function write(data, ret) {
+function write(data) {
   return new Promise((resolve, reject) => {
     fs.writeFile(store, JSON.stringify(data), (err) => {
       if (err)
         reject(err)
       else
-        resolve(ret)
+        resolve(data)
     })
   })
 }
@@ -83,29 +76,21 @@ class Store extends RadService {
 
   static description = "Data store"
 
-  @ field("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get({ key }) {
+  get(key) {
     return read()
       .then(data => data[key])
   }
 
-  @ mutation("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set({ key, value }) {
+  set(key, value) {
     return read()
       .then(data => {
         data[key] = value
-        return write(data, value)
+        return write(data)
       })
+      .then(() => value)
   }
 
-  @ mutation("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push({ key, value }) {
+  push(key, value) {
     return read()
       .then(data => {
         data[key].push(value)
@@ -113,6 +98,7 @@ class Store extends RadService {
           .then(() => data[key])
       })
   }
+
 }
 
 export default Store
@@ -121,6 +107,7 @@ export default Store
 For brevity, we forgo any kind of validations on the `Store` level,
 however in a real application we will probably want to create more specific methods such as
 `insert` and `update` that perform validations.
+Also note that, again, since Services are for internal use only, we do not need to add schema decorators or use a single `args` parameter.
 
 Also note that our current implementation is horribly inefficient, we will resolve performance concerns in the next section.
 
@@ -136,14 +123,14 @@ class Counter extends RadType {
   @ field("integer")
   @ description("The current value of the counter")
   value() {
-    return this.e$.Store.get({ key: 'value' })
+    return this.e$.Store.get('value')
   }
 
   @ field("number")
   @ args({ offset: "integer" })
   @ description("The time of last modification")
   mod({ offset = 0 } = {}) {
-    return this.e$.Store.get({ key: 'mods' })
+    return this.e$.Store.get('mods')
       .then(mods => mods[mods.length - offset - 1])
   }
 
@@ -152,9 +139,9 @@ class Counter extends RadType {
   @ description("Increment a counter by a given amount")
   increment({ amount }) {
     const Store = this.e$.Store
-    return Store.push({ key: 'mods', value: +Date.now() })
-      .then(() => Store.get({ key: 'value' }))
-      .then(value => Store.set({ key: 'value', value: value + amount }))
+    return Store.push('mods', +Date.now())
+      .then(() => Store.get('value'))
+      .then(value => Store.set('value', value + amount))
   }
 
 }
@@ -166,7 +153,6 @@ We can modify our `Person` type similarly:
 
 ```js
 // ... types/person.js
-
 class Person extends RadType {
 
   static description = "A simple person"
@@ -176,11 +162,29 @@ class Person extends RadType {
     this.me = person
   }
 
-  @ field("Person")
-  @ args({ name: "string!" })
+  @ service
   static get(root, { name }) {
-    return root.e$.Store.get({ key: `person__${name}` })
+    return root.e$.Store.get(`person__${name}`)
       .then(person => new this(root, person))
+  }
+
+  @ service
+  static create(root, name, age, knows = []) {
+    const Store = root.e$.Store
+    const person = { name, age }
+    return knows
+      // resolve KNOWS relationships sequentially
+      .reduce
+        ( (prev, curr) =>
+            prev.then( () => Store.push(`knows__${curr}`, name) )
+        , Promise.resolve()
+        )
+      // create KNOWS relationship for new person
+      .then(() => Store.set(`knows__${name}`, knows))
+      // save new person to store
+      .then(() => Store.set(`person__${name}`, person))
+      // return new person
+      .then(() => new this(root, person))
   }
 
   // ...
@@ -189,28 +193,8 @@ class Person extends RadType {
   @ description("List of people known by the specified person")
   knows() {
     const { e$, me } = this
-    return e$.Store.get({ key: `knows__${me.name}` })
+    return e$.Store.get(`knows__${me.name}`)
       .then(names => names.map(name => e$.Person({ name })))
-  }
-
-  @ mutation("Person")
-  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
-  static create(root, { name, age, knows = [] }) {
-    const Store = root.e$.Store
-    const person = { name, age }
-    return knows
-      // resolve KNOWS relationships sequentially
-      .reduce
-        ( (prev, curr) =>
-            prev.then( () => Store.push({ key: `knows__${curr}`, value: name }) )
-        , Promise.resolve()
-        )
-      // create KNOWS relationship for new person
-      .then(() => Store.set({ key: `knows__${name}`, value: knows }))
-      // save new person to store
-      .then(() => Store.set({ key: `person__${name}`, value: person }))
-      // return new person
-      .then(() => new this(root, person))
   }
 
   @ mutation("integer")
@@ -219,7 +203,7 @@ class Person extends RadType {
   birthdays({ num = 1 } = {}) {
     const { e$, me } = this
     me.age += num
-    return e$.Store.set({ key: `person__${me.name}`, value: me })
+    return e$.Store.set(`person__${me.name}`, me)
       .then(() => me.age)
   }
 

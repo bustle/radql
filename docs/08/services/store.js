@@ -4,8 +4,6 @@ import path from 'path'
 import fs from 'fs'
 
 import { fetch
-       , args
-       , description
        , RadService
        } from '../../../src'
 
@@ -63,24 +61,18 @@ class Store extends RadService {
       })
   }
 
-  @ fetch("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get({ key }) {
+  @ fetch
+  get(key) {
     return { type: "get" , key }
   }
 
-  @ fetch("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set({ key, value }) {
+  @ fetch
+  set(key, value) {
     return { type: "set", key, value, busts: true }
   }
 
-  @ fetch("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push({ key, value }) {
+  @ fetch
+  push(key, value) {
     return { type: "push", key, value, busts: true }
   }
 

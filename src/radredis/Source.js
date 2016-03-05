@@ -3,8 +3,6 @@ import Promise from 'bluebird'
 import Redis   from 'ioredis'
 
 import { fetch
-       , description
-       , args
        } from '../utils/decorators'
 
 import { RadService } from '../utils/types'
@@ -58,8 +56,8 @@ export default function(opts) {
         //.then(() => console.timeEnd(`FETCH #${n}`))
     }
 
-    @ fetch("string")
-    attr({ m, id, attr }) {
+    @ fetch
+    attr(m, id, attr) {
       return { key: `${m}:${id}:${attr}`
              , item: `${m}:${id}`
              , attr

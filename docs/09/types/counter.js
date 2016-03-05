@@ -14,14 +14,14 @@ class Counter extends RadType {
   @ field("integer")
   @ description("The current value of the counter")
   value() {
-    return this.e$.Store.get({ key: 'value' })
+    return this.e$.Store.get('value')
   }
 
   @ field("number")
   @ args({ offset: "integer" })
   @ description("The time of last modification")
   mod({ offset = 0 } = {}) {
-    return this.e$.Store.get({ key: 'mods' })
+    return this.e$.Store.get('mods')
       .then(mods => mods[mods.length - offset - 1])
   }
 
@@ -30,9 +30,9 @@ class Counter extends RadType {
   @ description("Increment a counter by a given amount")
   increment({ amount }) {
     const Store = this.e$.Store
-    return Store.push({ key: 'mods', value: +Date.now() })
-      .then(() => Store.get({ key: 'value' }))
-      .then(value => Store.set({ key: 'value', value: value + amount }))
+    return Store.push('mods', +Date.now())
+      .then(() => Store.get('value'))
+      .then(value => Store.set('value', value + amount))
   }
 
 }

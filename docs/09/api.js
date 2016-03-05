@@ -61,7 +61,7 @@ class API extends RadAPI {
   @ mutation("Person")
   @ args({ name: "string!", age: "integer", knows: [ "string" ] })
   createPerson({ name, age, knows }) {
-    return this.e$.Person.create({ name, age, knows })
+    return this.e$.Person.create(name, age, knows)
   }
 
   @ mutation("Band")

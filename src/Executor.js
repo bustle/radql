@@ -57,8 +57,8 @@ export default function(registry, opts = {}) {
           return Promise.resolve(s.get(root, args))
         }
         for (let key in s) {
-          if (s[key].field || s[key].mutation)
-            resolve[key] = args => s[key](root, args)
+          if (s[key].service)
+            resolve[key] = (...args) => s[key](root, ...args)
         }
         // object fields
         return resolve

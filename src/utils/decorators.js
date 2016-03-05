@@ -22,28 +22,6 @@ export function mutation(t, a) {
   }
 }
 
-export function fetch(t, a) {
-  return function (target, name, descriptor) {
-    // define method type
-    descriptor.value.field = true
-    descriptor.value.fetch = true
-    descriptor.enumerable = true
-    descriptor.writable = false
-    // decorate underlying method
-    const req = descriptor.value
-    descriptor.value = function(...args) {
-      const r = req(...args)
-      if (!r.src) r.src = this
-      return this.e$.fetch(r)
-    }
-    // retrieve old values
-    descriptor.value.type = req.type || t
-    descriptor.value.args = req.args || a
-    descriptor.value.description = req.description
-    return descriptor
-  }
-}
-
 export function type(t) {
   return function(target, name, descriptor) {
     descriptor.value.type = t
@@ -64,3 +42,30 @@ export function description(d) {
     return descriptor
   }
 }
+
+export function service (target, name, descriptor) {
+  descriptor.value.service = true
+  descriptor.enumerable = true
+  descriptor.writable = false
+  return descriptor
+}
+
+export function fetch (target, name, descriptor) {
+  // define method type
+  descriptor.value.fetch = true
+  descriptor.enumerable = true
+  descriptor.writable = false
+  // decorate underlying method
+  const req = descriptor.value
+  descriptor.value = function(...args) {
+    const r = req(...args)
+    if (!r.src) r.src = this
+    return this.e$.fetch(r)
+  }
+  // retrieve old values
+  descriptor.value.type = req.type
+  descriptor.value.args = req.args
+  descriptor.value.description = req.description
+  return descriptor
+}
+

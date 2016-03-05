@@ -3,12 +3,7 @@
 import path from 'path'
 import fs from 'fs'
 
-import { field
-       , mutation
-       , args
-       , description
-       , RadService
-       } from '../../../src'
+import { RadService } from '../../../src'
 
 const store = path.join(__dirname, 'store.json')
 
@@ -38,18 +33,12 @@ class Store extends RadService {
 
   static description = "Data store"
 
-  @ field("object")
-  @ args({ key: "string!" })
-  @ description("Retrieves an object from the store")
-  get({ key }) {
+  get(key) {
     return read()
       .then(data => data[key])
   }
 
-  @ mutation("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Modifies a value in the store")
-  set({ key, value }) {
+  set(key, value) {
     return read()
       .then(data => {
         data[key] = value
@@ -58,10 +47,7 @@ class Store extends RadService {
       .then(() => value)
   }
 
-  @ mutation("object")
-  @ args({ key: "string!", value: "object!" })
-  @ description("Pushes object to array in store")
-  push({ key, value }) {
+  push(key, value) {
     return read()
       .then(data => {
         data[key].push(value)

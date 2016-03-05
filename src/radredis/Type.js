@@ -49,14 +49,14 @@ export default function(source, schema, transforms = {}) {
 
     static get(root, { id }) {
       return root.e$[source.name]
-        .attr({ m, id, attr: 'id' })
+        .attr(m, id, 'id')
         .then(id => id && new this(root, { id }))
     }
 
     attr(attr) {
       return this._attrs[attr]
         || ( this._attrs[attr] = this.e$[source.name]
-               .attr({ m, attr, id: this._id })
+               .attr(m, this._id, attr)
                .then(v => deserializeAttr(v, attr))
            )
     }

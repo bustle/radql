@@ -2,6 +2,7 @@
 
 import { field
        , mutation
+       , service
        , args
        , description
        , RadType
@@ -17,13 +18,29 @@ class Person extends RadType {
     this.me = person
   }
 
-  // FIELDS
-
-  @ field("Person")
-  @ args({ name: "string!" })
+  @ service
   static get(root, { name }) {
-    return root.e$.Store.get({ key: `person__${name}` })
+    return root.e$.Store.get(`person__${name}`)
       .then(person => new this(root, person))
+  }
+
+  @ service
+  static create(root, name, age, knows = []) {
+    const Store = root.e$.Store
+    const person = { name, age }
+    return knows
+      // resolve KNOWS relationships sequentially
+      .reduce
+        ( (prev, curr) =>
+            prev.then( () => Store.push(`knows__${curr}`, name) )
+        , Promise.resolve()
+        )
+      // create KNOWS relationship for new person
+      .then(() => Store.set(`knows__${name}`, knows))
+      // save new person to store
+      .then(() => Store.set(`person__${name}`, person))
+      // return new person
+      .then(() => new this(root, person))
   }
 
   @ field("string")
@@ -42,30 +59,8 @@ class Person extends RadType {
   @ description("List of people known by the specified person")
   knows() {
     const { e$, me } = this
-    return e$.Store.get({ key: `knows__${me.name}` })
+    return e$.Store.get(`knows__${me.name}`)
       .then(names => names.map(name => e$.Person({ name })))
-  }
-
-  // MUTATIONS
-
-  @ mutation("Person")
-  @ args({ name: "string!", age: "integer", knows: [ "string" ] })
-  static create(root, { name, age, knows = [] }) {
-    const Store = root.e$.Store
-    const person = { name, age }
-    return knows
-      // resolve KNOWS relationships sequentially
-      .reduce
-        ( (prev, curr) =>
-            prev.then( () => Store.push({ key: `knows__${curr}`, value: name }) )
-        , Promise.resolve()
-        )
-      // create KNOWS relationship for new person
-      .then(() => Store.set({ key: `knows__${name}`, value: knows }))
-      // save new person to store
-      .then(() => Store.set({ key: `person__${name}`, value: person }))
-      // return new person
-      .then(() => new this(root, person))
   }
 
   @ mutation("integer")
@@ -74,7 +69,7 @@ class Person extends RadType {
   birthdays({ num = 1 } = {}) {
     const { e$, me } = this
     me.age += num
-    return e$.Store.set({ key: `person__${me.name}`, value: me })
+    return e$.Store.set(`person__${me.name}`, me)
       .then(() => me.age)
   }
 
