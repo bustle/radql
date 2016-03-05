@@ -46,7 +46,7 @@ export default function(opts) {
     }
 
     @ fetch("string")
-    prop ({ m, from, to, time, prop }) {
+    attr ({ m, from, to, time, attr }) {
 
     }
 

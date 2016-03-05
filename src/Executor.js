@@ -26,10 +26,10 @@ export default function(registry, opts = {}) {
           return enqueue(r)
         // mutation
         if (r.busts)
-          return cache[r.src.key][r.key] = enqueue(r)
+          return cache[r.src.constructor.name][r.key] = enqueue(r)
         // check cache, enqueue if not found
-        return cache[r.src.key][r.key]
-          || ( cache[r.src.key][r.key] = enqueue(r) )
+        return cache[r.src.constructor.name][r.key]
+          || ( cache[r.src.constructor.name][r.key] = enqueue(r) )
       }
 
     // CONVENIENCE METHODS
@@ -37,9 +37,9 @@ export default function(registry, opts = {}) {
     , map: ( rs, f ) => e$.all( _.map( rs, f ) )
 
     // CACHE BUSTING TOOLS
-    , bustKey: (srcKey, key) => cache[srcKey][key] = null
-    , bustSrc: key => cache[key] = {}
-    , setKey: (srcKey, key, value) => cache[srcKey][key] = value
+    , bustKey: (src, key) => cache[src][key] = null
+    , bustSrc: src => cache[src] = {}
+    , setKey: (src, key, value) => cache[src][key] = value
 
     }
 
@@ -72,18 +72,14 @@ export default function(registry, opts = {}) {
     ( registry.services
     , (s, name) => {
         // initialize cache
-        if (s.key) cache[s.key] = {}
+        cache[name] = {}
         Object.defineProperty
           ( e$
           , name
           , { enumerable: true
             , get() {
-                if (services[name])
-                  return services[name]
-                const service = new s(root)
-                if (s.key)
-                  service.key = s.key
-                return services[name] = service
+                return services[name]
+                  || ( services[name] = new s(root) )
               }
             })
       }
@@ -101,7 +97,7 @@ export default function(registry, opts = {}) {
     queue = []
 
     // group jobs by type
-    const jobs = _.groupBy(q, 'req.src.key')
+    const jobs = _.groupBy(q, 'req.src.constructor.name')
 
     nextJob = null // copy and swap jobs
     return curJob = Promise.all // map all job groups to their exec fn

@@ -14,7 +14,6 @@ export default function(opts) {
   class Source extends RadService {
 
     static opts = opts
-    static key = opts.name || 'Radredis'
 
     constructor(root) {
       super(root)
@@ -30,7 +29,7 @@ export default function(opts) {
       jobs = _.map
         ( _.groupBy(jobs, 'req.item')
         , (l, item) =>
-            ( { req: { item , props: _.map(l, 'req.prop') }
+            ( { req: { item , attrs: _.map(l, 'req.attr') }
               , resolve: vals => _.forEach(l, (job, i) => job.resolve(vals[i]))
               , reject: err => _.forEach(l, (job, i) => job.reject(err))
               }
@@ -44,7 +43,7 @@ export default function(opts) {
       const p = this.redis.pipeline()
       _.forEach
         ( jobs
-        , j => p.hmget(`${j.req.item}:attributes`, j.req.props)
+        , j => p.hmget(`${j.req.item}:attributes`, j.req.attrs)
         )
 
       // execute pipeline
@@ -60,17 +59,17 @@ export default function(opts) {
     }
 
     @ fetch("string")
-    prop({ m, id, prop }) {
-      return { key: `${m}:${id}:${prop}`
+    attr({ m, id, attr }) {
+      return { key: `${m}:${id}:${attr}`
              , item: `${m}:${id}`
-             , prop
+             , attr
              }
     }
 
   }
 
   // define name attribute
-  Object.defineProperty(Source, 'name', { value: Source.key })
+  Object.defineProperty(Source, 'name', { value: opts.name || 'Radredis' })
 
   return Source
 

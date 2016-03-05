@@ -22,22 +22,27 @@ export default function(source, schema) {
     // fields
 
     @ field([ "object" ])
-    from({}) {
+    from({ from, limit, offset }) {
 
     }
 
     @ field("object")
-    of({}) {
-
-    }
-
-    @ field("object")
-    get({  }) {
+    of({ from }) {
 
     }
 
     @ field([ "object" ])
-    find({  }) {
+    find({ from, to, time }) {
+
+    }
+
+    @ field("object")
+    get({ from, to, limit, offset }) {
+
+    }
+
+    @ field("object")
+    attr({ from, to, time, attr }) {
 
     }
 
@@ -48,6 +53,20 @@ export default function(source, schema) {
 
     }
 
+    @ mutation("object")
+    set({  }) {
+
+    }
+
+    @ mutation("delete")
+    delete({  }) {
+
+    }
+
+    @ mutation("deleteAll")
+    deleteAll({  }) {
+
+    }
 
   }
 

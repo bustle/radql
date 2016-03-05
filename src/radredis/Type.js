@@ -49,15 +49,15 @@ export default function(source, schema, transforms = {}) {
 
     static get(root, { id }) {
       return root.e$[source.name]
-        .prop({ m, id, prop: 'id' })
+        .attr({ m, id, attr: 'id' })
         .then(id => id && new this(root, { id }))
     }
 
-    attr(prop) {
-      return this._attrs[prop]
-        || ( this._attrs[prop] = this.e$[source.name]
-               .prop({ m, prop, id: this._id })
-               .then(v => deserializeAttr(v, prop))
+    attr(attr) {
+      return this._attrs[attr]
+        || ( this._attrs[attr] = this.e$[source.name]
+               .attr({ m, attr, id: this._id })
+               .then(v => deserializeAttr(v, attr))
            )
     }
 
@@ -70,7 +70,7 @@ export default function(source, schema, transforms = {}) {
         , (attr, name) => {
             // update internal representation
             this._attrs[name] = this.e$.setKey
-              ( source.key
+              ( source.name
               , `${m}:${this._id}:${name}`
               , Promise.resolve(attr)
               )
