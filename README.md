@@ -14,5 +14,5 @@ RadQL comes with a set of decorators, a type registry, support for lazy evaluati
 7. [Standalone Services](https://github.com/bustlelabs/radql/wiki/07.-Standalone-Services)
 8. [Batching Execution (Solving the N+1 SELECTs Problem)](https://github.com/bustlelabs/radql/wiki/08.-Batching-Execution)
 9. [Radredis](https://github.com/bustlelabs/radql/wiki/09.-Radredis)
-10. Radgraph Services
-11. Radgraph Types
+10. [Radgraph Services](https://github.com/bustlelabs/radql/wiki/10.-Radgraph-Services)
+11. [Radgraph Types](https://github.com/bustlelabs/radql/wiki/11.-Radgraph-Types)

@@ -1,4 +1,4 @@
-# 10. Radgraph
+# 10. Radgraph Services
 
 RadQL also comes bundled with Radgraph. Let's use it to create a `Likes` relationship from a `Person` to a `Band`:
 
