@@ -41,7 +41,6 @@ const schema =
 ```
 
 We create a schema for our `Band` type. See the `radredis` documentation for more information.
-Note that we introduce a new property called `lazy`. `lazy` fields will only be fetched if asked for, and are accessed through `this.lazy(name)` rather than `this.attrs[name]`.
 
 ### Type
 

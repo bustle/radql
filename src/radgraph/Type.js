@@ -14,6 +14,11 @@ export default function(source, service) {
 
   class Type extends RadType {
 
+    constructor(root, edge) {
+      super(root)
+      this.service = this.e$[service.name]
+    }
+
   }
 
   return Type
