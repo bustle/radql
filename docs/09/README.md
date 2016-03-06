@@ -368,5 +368,6 @@ Let `Model` be be a `Radredis` model, `Radredis` be the result of calling `Type(
 - `Radredis.create(root, attrs)` performs `Model.create(attrs)`
 - `this.attr(name)` returns a Promise that resolves to the value specified
 - `this._id` returns the current id
+- `this._all()` returns all attributes, useful for running partial updates as radredis wants the complete model
 - `this._update(attrs)` performs `Model.update(this._id, attrs)` on the instance, and mutates `this.attrs`
 - `this._delete()` performs `Model.delete(this._id)` on the instance

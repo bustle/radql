@@ -41,7 +41,6 @@ export default function(opts) {
         .filter(job => !(job.req.obj))
         .concat(j)
         .value()
-
       // build pipeline
       const p = this.redis.pipeline()
       _.forEach
@@ -50,14 +49,13 @@ export default function(opts) {
         )
       // execute pipeline
       p.exec()
-      .map(([err, val], i) => {
-        const job = jobs[i]
-        if (err)
-          job.reject(err)
-        else
-          job.resolve(val)
-      })
-
+        .map(([err, val], i) => {
+          const job = jobs[i]
+          if (err)
+            job.reject(err)
+          else
+            job.resolve(val)
+        })
     }
 
     @ fetch

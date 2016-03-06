@@ -69,3 +69,13 @@ export function fetch (target, name, descriptor) {
   return descriptor
 }
 
+export function decorates(fn) {
+  return function (target, name, descriptor) {
+    const res = descriptor.value
+    descriptor.value = function(...args) {
+      return res.bind(this)(...args)
+        .then(v => v || fn.bind(this)(...args))
+    }
+    return descriptor
+  }
+}

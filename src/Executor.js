@@ -54,7 +54,11 @@ export default function(registry, opts = {}) {
         cache[name] = {}
         // object factory
         const resolve = function(args) {
-          return Promise.resolve(s.get(root, args))
+          if (!s.key) // no caching mechanism, return as-is
+            return Promise.resolve(s.get(root, args))
+          const k = s.key(args)
+          return cache[name][k]
+            || ( cache[name][k] = Promise.resolve(s.get(root, args)) )
         }
         for (let key in s) {
           if (s[key].service)

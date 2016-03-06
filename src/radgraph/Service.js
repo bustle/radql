@@ -26,6 +26,10 @@ export default function(source, schema, transforms) {
       }
     }
 
+    static source = source
+    static schema = schema
+    static _keySp = Edge._edgeKeyspace
+
     // fields
     from      = fns.from
     of        = fns.of

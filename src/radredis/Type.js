@@ -45,7 +45,12 @@ export default function(source, schema, transforms = {}) {
       super(root)
       this._id = attrs.id
       this._attrs = _.mapValues(attrs, Promise.resolve)
+      this._src = this.e$[source.name]
     }
+
+    static args = { id: 'id!' }
+
+    static key({ id }) { return id }
 
     static get(root, { id }) {
       return root.e$[source.name]
@@ -53,29 +58,39 @@ export default function(source, schema, transforms = {}) {
         .then(id => id && new this(root, { id }))
     }
 
+    static all(root, { index = 'id', limit = 30, offset = 0 } = {}) {
+      return Model.all({ index, limit, offset, properties: [ 'id' ] })
+    }
+
+    static range(root, { index, min, max, limit = 30, offset = 0 } = {}) {
+      return Model.range({ index, limit, offset, min, max, properties: [ 'id' ] })
+    }
+
+    static create(root, attrs) {
+      return Model.create(attrs)
+    }
+
     attr(attr) {
       return this._attrs[attr]
-        || ( this._attrs[attr] = this.e$[source.name]
+        || ( this._attrs[attr] = this._src
                .attr(m, this._id, attr)
                .then(v => deserializeAttr(v, attr))
            )
     }
 
+    setAttr(attr, val) {
+      return this._attrs[attr] = this.e$.setKey
+        ( source.name
+        , `${m}:${this._id}:${attr}`
+        , Promise.resolve(val)
+        )
+    }
+
     _update(attrs) {
-      // remove falsey values
+      // remove undefined values
       attrs = _(attrs).omitBy(p => _.isUndefined(p)).omit('id').value()
       // update caches
-      _.forEach
-        ( attrs
-        , (attr, name) => {
-            // update internal representation
-            this._attrs[name] = this.e$.setKey
-              ( source.name
-              , `${m}:${this._id}:${name}`
-              , Promise.resolve(attr)
-              )
-          }
-        )
+      _.forEach ( attrs , (val, attr) => this.setAttr(attr, val) )
       // perform query
       return Model.update(this._id, attrs)
         // return self
@@ -84,9 +99,8 @@ export default function(source, schema, transforms = {}) {
 
     // resolve all fields (for doing better updates)
     _all() {
-      return Promise.all( _.map(keys, name => this.attr(name) ) )
+      return Promise.all( _.map(props, name => this.attr(name) ) )
         .then(attrs => _.zipObject(props, attrs))
-        .then(all => _.mapValues(all, deserializeAttr))
     }
 
     _delete() {
@@ -94,7 +108,7 @@ export default function(source, schema, transforms = {}) {
       _.forEach
         ( this._attrs
         , (attr, name) => {
-            this.e$.bustKey(source.key, `${m}:${this._id}:${name}`)
+            this.e$.bustKey(source.name, `${m}:${this._id}:${name}`)
           }
         )
       // perform query
@@ -105,18 +119,6 @@ export default function(source, schema, transforms = {}) {
         .return(this)
     }
 
-  }
-
-  Type.all = function(root, { index = 'id', limit = 30, offset = 0 } = {}) {
-    return Model.all({ index, limit, offset, properties: [ 'id' ] })
-  }
-
-  Type.range = function(root, { index, min, max, limit = 30, offset = 0 } = {}) {
-    return Model.range({ index, limit, offset, min, max, properties: [ 'id' ] })
-  }
-
-  Type.create = function(root, attrs) {
-    return Model.create(attrs)
   }
 
   return store[schema.title] = Type
