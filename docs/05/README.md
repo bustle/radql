@@ -67,6 +67,58 @@ Notice that our subselections on the `know` field are mapped to all people retur
   [ Execute this query via GraphiQL ]
 </a>
 ```json
+{
+  "data": {
+    "API": {
+      "person": {
+        "name": "daria",
+        "age": 17,
+        "knows": [
+          {
+            "name": "jane",
+            "age": 17,
+            "knows": [
+              {
+                "name": "daria",
+                "age": 17,
+                "knows": [
+                  {
+                    "name": "jane",
+                    "age": 17
+                  },
+                  {
+                    "name": "quinn",
+                    "age": 15
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "quinn",
+            "age": 15,
+            "knows": [
+              {
+                "name": "daria",
+                "age": 17,
+                "knows": [
+                  {
+                    "name": "jane",
+                    "age": 17
+                  },
+                  {
+                    "name": "quinn",
+                    "age": 15
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
 ```
 
 We can extend this same logic to describe all sorts of common relationships, such as a `User` authoring a `Post`.
