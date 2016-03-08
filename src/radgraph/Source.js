@@ -14,6 +14,7 @@ export default function(opts) {
   class Source extends RadService {
 
     static opts = opts
+    static _name = opts.name || 'Radgraph'
 
     constructor(root) {
       super(root)
@@ -92,7 +93,7 @@ export default function(opts) {
 
   }
 
-  Object.defineProperty(Source, 'name', { value: opts.name || 'Radgraph' })
+  //Object.defineProperty(Source, 'name', { value: opts.name || 'Radgraph' })
 
   return Source
 

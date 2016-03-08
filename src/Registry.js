@@ -133,7 +133,8 @@ export default function ( apis = [], types = [], services = [] ) {
   // registration methods
 
   function registerService(s) {
-    registry.services[s.name] = s
+    const name = s._name || s.name
+    registry.services[name] = s
   }
 
   function registerType(t) {

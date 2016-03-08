@@ -45,7 +45,7 @@ export default function(source, schema, transforms = {}) {
       super(root)
       this._id = attrs.id
       this._attrs = _.mapValues(attrs, Promise.resolve)
-      this._src = this.e$[source.name]
+      this._src = this.e$[source._name]
     }
 
     static args = { id: 'id!' }
@@ -53,7 +53,7 @@ export default function(source, schema, transforms = {}) {
     static key({ id }) { return id }
 
     static get(root, { id }) {
-      return root.e$[source.name]
+      return root.e$[source._name]
         .attr(m, id, 'id')
         .then(id => id && new this(root, { id }))
     }
@@ -80,7 +80,7 @@ export default function(source, schema, transforms = {}) {
 
     setAttr(attr, val) {
       return this._attrs[attr] = this.e$.setKey
-        ( source.name
+        ( source._name
         , `${m}:${this._id}:${attr}`
         , Promise.resolve(val)
         )
@@ -108,7 +108,7 @@ export default function(source, schema, transforms = {}) {
       _.forEach
         ( this._attrs
         , (attr, name) => {
-            this.e$.bustKey(source.name, `${m}:${this._id}:${name}`)
+            this.e$.bustKey(source._name, `${m}:${this._id}:${name}`)
           }
         )
       // perform query

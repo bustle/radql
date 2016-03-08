@@ -19,7 +19,7 @@ export default function(source, schema, transforms) {
 
     constructor(root) {
       super(root)
-      this.src = this.e$[source.name]
+      this.src = this.e$[source._name]
       if (Edge.inv) {
         this.inv = fromEdge(Edge.inv, true)
         this.inv.src = this.src
@@ -29,6 +29,7 @@ export default function(source, schema, transforms) {
     static source = source
     static schema = schema
     static _keySp = Edge._edgeKeyspace
+    static _name  = schema.name
 
     // fields
     from      = fns.from
@@ -44,8 +45,6 @@ export default function(source, schema, transforms) {
     deleteAll = fns.deleteAll
 
   }
-
-  Object.defineProperty(Service, 'name', { value: schema.name })
 
   return Service
 

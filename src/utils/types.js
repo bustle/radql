@@ -14,4 +14,8 @@ export class RadService {
   constructor({ e$ }) {
     this.e$ = e$
   }
+  // TODO: fix this bullshit when lambda upgrades its shit
+  static get __name() {
+    return this._name || this.name
+  }
 }

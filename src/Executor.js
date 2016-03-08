@@ -26,10 +26,10 @@ export default function(registry, opts = {}) {
           return enqueue(r)
         // mutation
         if (r.busts)
-          return cache[r.src.constructor.name][r.key] = enqueue(r)
+          return cache[r.src.constructor.__name][r.key] = enqueue(r)
         // check cache, enqueue if not found
-        return cache[r.src.constructor.name][r.key]
-          || ( cache[r.src.constructor.name][r.key] = enqueue(r) )
+        return cache[r.src.constructor.__name][r.key]
+          || ( cache[r.src.constructor.__name][r.key] = enqueue(r) )
       }
 
     // CONVENIENCE METHODS
@@ -101,7 +101,7 @@ export default function(registry, opts = {}) {
     queue = []
 
     // group jobs by type
-    const jobs = _.groupBy(q, 'req.src.constructor.name')
+    const jobs = _.groupBy(q, 'req.src.constructor.__name')
 
     nextJob = null // copy and swap jobs
     return curJob = Promise.all // map all job groups to their exec fn

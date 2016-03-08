@@ -34,7 +34,7 @@ export default function(service, { fromKey = 'id', toKey = 'id' }) {
       this._toKey   = to
       this._time    = time
       this._attrs   = _.mapValues(data, Promise.resolve)
-      this._service = this.e$[service.name]
+      this._service = this.e$[service._name]
     }
 
     static key({ type, from, to, time }) {
@@ -68,7 +68,7 @@ export default function(service, { fromKey = 'id', toKey = 'id' }) {
 
     setAttr(attr, val) {
       return this._attrs[attr] = this.e$.setKey
-        ( source.name
+        ( source._name
         , `${_keySp}:${this._fromKey}:${this._toKey}:${this._time}:${attr}`
         , Promise.resolve(val)
         )
