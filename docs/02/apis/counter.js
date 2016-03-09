@@ -32,7 +32,7 @@ class Counter extends RadAPI {
   @ description("Increment a counter by a given amount")
   increment({ amount }) {
     mods.push(+Date.now())
-    return value += amount
+    value += amount
   }
 
 }

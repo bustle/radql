@@ -49,11 +49,11 @@ class Person extends RadAPI {
     return this.me.age
   }
 
-  @ mutation("integer")
+  @ mutation
   @ args({ num: "integer" })
   @ description("Increase age by \"num\" (default 1)")
   birthdays({ num = 1 } = {}) {
-    return this.me.age += num
+    this.me.age += num
   }
 
 }
