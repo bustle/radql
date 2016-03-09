@@ -1,3 +1,5 @@
+import Promse from 'bluebird'
+
 export function field(t, a) {
   return function (target, name, descriptor) {
     const { value } = descriptor
@@ -32,8 +34,14 @@ export function description(d) {
 }
 
 export function mutation(target, name, descriptor) {
-  const { value } = descriptor
-  value.mutation = true
+  const mut = descriptor.value
+  descriptor.value = function(...args) {
+    return Promise.resolve(mut.bind(this)(...args))
+      .then(() => this)
+  }
+  descriptor.value.mutation = true
+  descriptor.value.args = mut.args
+  descriptor.value.description = mut.description
   descriptor.enumerable = true
   descriptor.writable = false
   return descriptor

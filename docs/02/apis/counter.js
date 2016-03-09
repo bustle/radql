@@ -27,7 +27,7 @@ class Counter extends RadAPI {
     return mods[mods.length - offset - 1]
   }
 
-  @ mutation("integer")
+  @ mutation
   @ args({ amount: "integer!" })
   @ description("Increment a counter by a given amount")
   increment({ amount }) {

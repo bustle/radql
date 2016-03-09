@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import Promise from 'bluebird'
 import { throwError } from './utils'
 
 import { GraphQLSchema
@@ -218,12 +217,12 @@ export default function ( apis = [], types = [], services = [] ) {
                 : mArgs
               // create field
               fs[`${api.name}__${n}`] =
-                { type:        gqlType(f.type)
+                { type:        gqlType(api.name)
                 , description: f.description
                 , args:        args
                 , resolve:     ( __, a, { rootValue: r } ) =>
                                  r.e$[api.name](a)
-                                  .then(ctx => ctx[n](a).return(ctx))
+                                  .then(ctx => ctx[n](a))
                 }
             }
             return fs
