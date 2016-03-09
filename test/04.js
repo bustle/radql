@@ -27,18 +27,18 @@ describe ('04 - Data Types', function() {
   it ('should perform mutations', function() {
 
     const q = `mutation {
-      i1: API__incrementCounter
-      i2: API__incrementCounter
-      i3: API__incrementCounter
-      daria: API__birthday(name: "daria")
-      jane: API__birthday(name: "jane")
+      i1: API__incrementCounter { counter { value } }
+      i2: API__incrementCounter { counter { value } }
+      i3: API__incrementCounter { counter { value } }
+      daria: API__birthday(name: "daria") { person(name: "daria") { age } }
+      jane: API__birthday(name: "jane") { person(name: "jane") { age } }
     }`
     const r = {
-      "i1": 1,
-      "i2": 2,
-      "i3": 3,
-      "daria": 18,
-      "jane": 18
+      "i1": { "counter": { "value": 1 } },
+      "i2": { "counter": { "value": 2 } },
+      "i3": { "counter": { "value": 3 } },
+      "daria": { "person": { "age": 18 } },
+      "jane": { "person": { "age": 18 } }
     }
 
     return check(serve, q, r)
