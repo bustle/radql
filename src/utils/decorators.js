@@ -10,18 +10,6 @@ export function field(t, a) {
   }
 }
 
-export function mutation(t, a) {
-  return function (target, name, descriptor) {
-    const { value } = descriptor
-    value.mutation = true
-    value.type = value.type || t
-    value.args = value.args || a
-    descriptor.enumerable = true
-    descriptor.writable = false
-    return descriptor
-  }
-}
-
 export function type(t) {
   return function(target, name, descriptor) {
     descriptor.value.type = t
@@ -41,6 +29,14 @@ export function description(d) {
     descriptor.value.description = d
     return descriptor
   }
+}
+
+export function mutation(target, name, descriptor) {
+  const { value } = descriptor
+  value.mutation = true
+  descriptor.enumerable = true
+  descriptor.writable = false
+  return descriptor
 }
 
 export function service (target, name, descriptor) {

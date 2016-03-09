@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import Promise from 'bluebird'
 import { throwError } from './utils'
 
 import { GraphQLSchema
@@ -222,7 +223,7 @@ export default function ( apis = [], types = [], services = [] ) {
                 , args:        args
                 , resolve:     ( __, a, { rootValue: r } ) =>
                                  r.e$[api.name](a)
-                                  .then(ctx => ctx[n](a))
+                                  .then(ctx => ctx[n](a).return(ctx))
                 }
             }
             return fs
