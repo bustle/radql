@@ -24,14 +24,14 @@ class API extends RadAPI {
     return this.e$.Person({ name })
   }
 
-  @ mutation
+  @ mutation("integer")
   @ description("Increment our counter by 1")
   incrementCounter() {
     return this.e$.Counter()
       .then(c => c.increment({ amount: 1 }))
   }
 
-  @ mutation
+  @ mutation("integer")
   @ args({ name: "string!" })
   @ description("Increment a person's age by 1")
   birthday({ name }) {

@@ -21,16 +21,16 @@ describe ('03 - API Contexts', function() {
   it ('should perform mutations', function() {
 
     const q = `mutation {
-      Counter__increment(amount: 5) { value }
-      daria: Person__birthdays(name: "daria", num: 2) { age }
-      jane: Person__birthdays(name: "jane") { age }
-      quinn: Person__birthdays(name: "quinn") { age }
+      Counter__increment(amount: 5)
+      daria: Person__birthdays(name: "daria", num: 2)
+      jane: Person__birthdays(name: "jane")
+      quinn: Person__birthdays(name: "quinn")
     }`
-    const r = {
-      "Counter__increment": { "value": 5 },
-      "daria": { "age": 19 },
-      "jane": { "age": 18 },
-      "quinn": { "age": 16 }
+    const r =
+    { "Counter__increment": 5
+    , "daria": 19
+    , "jane": 18
+    , "quinn": 16
     }
 
     return check(serve, q, r)

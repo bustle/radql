@@ -36,12 +36,12 @@ class Counter extends RadAPI {
     return mods[mods.length - offset - 1]
   }
 
-  @ mutation
+  @ mutation("integer")
   @ args({ amount: "integer!" })
   @ description("Increment a counter by a given amount")
   increment({ amount }) {
     mods.push(+Date.now())
-    value += amount
+    return value += amount
   }
 
 }
@@ -97,30 +97,20 @@ We should now be able to perform the following query:
 We can also perform the specified mutation.
 Notice that the mutation is named `Counter__increment` rather than being accessed through `Counter { increment }`.
 The current `graphql-js` implementation only guarantees serial execution on the top level.
-As such, all mutations will be root-level mutation fields named `[ API Name ]__[ Mutation Name ]`.
-
-Also notice that our subselection on our mutation looks exactly like a `Counter` query.
-All mutations return a reference to their parent API.
-This allows us to query any changes that may have occurred.
+As such, all mutations will root-level mutation fields named `[ API Name ]__[ Mutation Name ]`.
 
 ```graphql
 mutation {
-  Counter__increment(amount: 5) {
-    value
-    mod
-  }
+  Counter__increment(amount: 5)
 }
 ```
-<a href="http://localhost:3000/graphql?query=mutation%20%7B%0A%20%20Counter__increment(amount%3A%205)%20%7B%0A%20%20%20%20value%0A%20%20%20%20mod%0A%20%20%7D%0A%7D" target="_blank">
+<a href="http://localhost:3000/graphql?query=mutation%20{%0A%20%20Counter__increment%28amount%3A%205%29%0A}" target="_blank">
   [ Execute this query via GraphiQL ]
 </a>
 ```json
 {
   "data": {
-    "Counter__increment": {
-      "value": 5,
-      "mod": 1456939753223
-    }
+    "Counter__increment": 5
   }
 }
 ```

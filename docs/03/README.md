@@ -56,11 +56,11 @@ class Person extends RadAPI {
     return this.me.age
   }
 
-  @ mutation
+  @ mutation(integer")
   @ args({ num: "integer" })
   @ description("Increase age by \"num\" (default 1)")
   birthdays({ num = 1 } = {}) {
-    this.me.age += num
+    return this.me.age += num
   }
 
 }
@@ -127,21 +127,13 @@ the `API` constructor with the arguments of the mutation.
 
 ```graphql
 mutation {
-  Counter__increment(amount: 5) {
-    value
-  }
-  daria: Person__birthdays(name: "daria", num: 2) {
-    age
-  }
-  jane: Person__birthdays(name: "jane") {
-    age
-  }
-  quinn: Person__birthdays(name: "quinn") {
-    age
-  }
+  Counter__increment(amount: 5)
+  daria: Person__birthdays(name: "daria", num: 2)
+  jane: Person__birthdays(name: "jane")
+  quinn: Person__birthdays(name: "quinn")
 }
 ```
-<a href="http://localhost:3000/graphql?query=mutation%20%7B%0A%20%20Counter__increment(amount%3A%205)%20%7B%0A%20%20%20%20value%0A%20%20%7D%0A%20%20daria%3A%20Person__birthdays(name%3A%20%22daria%22%2C%20num%3A%202)%20%7B%0A%20%20%20%20age%0A%20%20%7D%0A%20%20jane%3A%20Person__birthdays(name%3A%20%22jane%22)%20%7B%0A%20%20%20%20age%0A%20%20%7D%0A%20%20quinn%3A%20Person__birthdays(name%3A%20%22quinn%22)%20%7B%0A%20%20%20%20age%0A%20%20%7D%0A%7D" target="_blank">
+<a href="http://localhost:3000/graphql?query=mutation%20{%0A%20%20Counter__increment%28amount%3A%205%29%0A%20%20daria%3A%20Person__birthdays%28name%3A%20%22daria%22%2C%20num%3A%202%29%0A%20%20jane%3A%20Person__birthdays%28name%3A%20%22jane%22%29%0A%20%20quinn%3A%20Person__birthdays%28name%3A%20%22quinn%22%29%0A}" target="_blank">
   [ Execute this query via GraphiQL ]
 </a>
 ```json

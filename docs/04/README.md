@@ -101,14 +101,14 @@ class API extends RadAPI {
     return this.e$.Person({ name })
   }
 
-  @ mutation
+  @ mutation("integer")
   @ description("Increment our counter by 1")
   incrementCounter() {
     return this.e$.Counter()
       .then(c => c.increment({ amount: 1 }))
   }
 
-  @ mutation
+  @ mutation("integer")
   @ args({ name: "string!" })
   @ description("Increment a person's age by 1")
   birthday({ name }) {
@@ -125,9 +125,6 @@ Notice that our methods use `this.e$`.
 All `RadAPI` and `RadType` instances contain a reference to `e$`, which is the current execution context.
 This will become very useful when we explore the concept of batching execution, as `e$` is a per-request singleton,
 however for now we're using it to call our factory methods.
-
-Since `this.e$.Type()` is asynchronous, it is important that we use this as a return value for our mutations.
-If a mutation returns a promise, RadQL will wait for it to resolve before proceeding.
 
 Note that `this.e$[TypeName](args)` isn't quite the same as calling `Type.get(args)`.
 `e$` also implements memoization for resource sharing and other features for efficiency.
@@ -194,64 +191,24 @@ Notice that we only allow incrementing by 1 in this API.
 
 ```graphql
 mutation {
-  i1: API__incrementCounter {
-		counter {
-      value
-    }
-  }
-  i2: API__incrementCounter {
-    counter {
-      value
-    }
-  }
-  i3: API__incrementCounter {
-    counter {
-      value
-    }
-  }
-  daria: API__birthday(name: "daria") {
-    person(name: "daria") {
-      age
-    }
-  }
-  jane: API__birthday(name: "jane") {
-    person(name: "jane") {
-      age
-    }
-  }
+  i1: API__incrementCounter
+  i2: API__incrementCounter
+  i3: API__incrementCounter
+  daria: API__birthday(name: "daria")
+  jane: API__birthday(name: "jane")
 }
 ```
-<a href="http://localhost:3000/graphql?query=mutation%20%7B%0A%20%20i1%3A%20API__incrementCounter%20%7B%0A%09%09counter%20%7B%0A%20%20%20%20%20%20value%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20i2%3A%20API__incrementCounter%20%7B%0A%20%20%20%20counter%20%7B%0A%20%20%20%20%20%20value%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20i3%3A%20API__incrementCounter%20%7B%0A%20%20%20%20counter%20%7B%0A%20%20%20%20%20%20value%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20daria%3A%20API__birthday(name%3A%20%22daria%22)%20%7B%0A%20%20%20%20person(name%3A%20%22daria%22)%20%7B%0A%20%20%20%20%20%20age%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20jane%3A%20API__birthday(name%3A%20%22jane%22)%20%7B%0A%20%20%20%20person(name%3A%20%22jane%22)%20%7B%0A%20%20%20%20%20%20age%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D" target="_blank">
+<a href="http://localhost:3000/graphql?query=mutation%20{%0A%20%20i1%3A%20API__incrementCounter%0A%20%20i2%3A%20API__incrementCounter%0A%20%20i3%3A%20API__incrementCounter%0A%20%20daria%3A%20API__birthday%28name%3A%20%22daria%22%29%0A%20%20jane%3A%20API__birthday%28name%3A%20%22jane%22%29%0A}" target="_blank">
   [ Execute this query via GraphiQL ]
 </a>
 ```json
 {
   "data": {
-    "i1": {
-      "counter": {
-        "value": 1
-      }
-    },
-    "i2": {
-      "counter": {
-        "value": 2
-      }
-    },
-    "i3": {
-      "counter": {
-        "value": 3
-      }
-    },
-    "daria": {
-      "person": {
-        "age": 18
-      }
-    },
-    "jane": {
-      "person": {
-        "age": 18
-      }
-    }
+    "i1": 1,
+    "i2": 2,
+    "i3": 3,
+    "daria": 18,
+    "jane": 18
   }
 }
 ```

@@ -51,11 +51,11 @@ class Person extends RadType {
     return this.me.age
   }
 
-  @ mutation
+  @ mutation("integer")
   @ args({ num: "integer" })
   @ description("Increase age by \"num\" (default 1)")
   birthdays({ num = 1 } = {}) {
-    this.me.age += num
+    return this.me.age += num
   }
 
 }

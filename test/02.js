@@ -16,8 +16,8 @@ describe ('02 - APIs', function() {
 
   it ('should perform mutations', function() {
 
-    const q = `mutation { Counter__increment(amount: 5) { value mod } }`
-    const r = { "Counter__increment": { "value": 5, "mod": __time__ } }
+    const q = `mutation { Counter__increment(amount: 5) }`
+    const r = { "Counter__increment": 5 }
 
     return check(serve, q, r)
 

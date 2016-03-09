@@ -1,9 +1,19 @@
-import Promse from 'bluebird'
-
 export function field(t, a) {
   return function (target, name, descriptor) {
     const { value } = descriptor
     value.field = true
+    value.type = value.type || t
+    value.args = value.args || a
+    descriptor.enumerable = true
+    descriptor.writable = false
+    return descriptor
+  }
+}
+
+export function mutation(t, a) {
+  return function (target, name, descriptor) {
+    const { value } = descriptor
+    value.mutation = true
     value.type = value.type || t
     value.args = value.args || a
     descriptor.enumerable = true
@@ -31,20 +41,6 @@ export function description(d) {
     descriptor.value.description = d
     return descriptor
   }
-}
-
-export function mutation(target, name, descriptor) {
-  const mut = descriptor.value
-  descriptor.value = function(...args) {
-    return Promise.resolve(mut.bind(this)(...args))
-      .then(() => this)
-  }
-  descriptor.value.mutation = true
-  descriptor.value.args = mut.args
-  descriptor.value.description = mut.description
-  descriptor.enumerable = true
-  descriptor.writable = false
-  return descriptor
 }
 
 export function service (target, name, descriptor) {

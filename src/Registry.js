@@ -217,7 +217,7 @@ export default function ( apis = [], types = [], services = [] ) {
                 : mArgs
               // create field
               fs[`${api.name}__${n}`] =
-                { type:        gqlType(api.name)
+                { type:        gqlType(f.type)
                 , description: f.description
                 , args:        args
                 , resolve:     ( __, a, { rootValue: r } ) =>

@@ -27,12 +27,12 @@ class Counter extends RadType {
     return mods[mods.length - offset - 1]
   }
 
-  @ mutation
+  @ mutation("integer")
   @ args({ amount: "integer!" })
   @ description("Increment a counter by a given amount")
   increment({ amount }) {
     mods.push(+Date.now())
-    value += amount
+    return value += amount
   }
 
 }
