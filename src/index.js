@@ -14,14 +14,15 @@ export default function (apis, types, services, opts) {
          , serve
          }
 
-  function RootValue(req) {
+  function RootValue(query, req) {
     return { e$: Executor(registry, opts)
            , opts
+           , req
            }
   }
 
-  function serve(req, vars, opname) {
-    return graphql(schema, req, RootValue(req), vars, opname)
+  function serve(query, vars, req) {
+    return graphql(schema, query, RootValue(query, req), vars)
   }
 
 }
