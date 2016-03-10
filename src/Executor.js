@@ -1,7 +1,7 @@
 import Promise from 'bluebird'
 import _       from 'lodash'
 
-export default function(registry, opts = {}) {
+export default function(registry, req, opts = {}) {
 
   const { trace, time } = opts
 
@@ -44,7 +44,7 @@ export default function(registry, opts = {}) {
     }
 
   // root value
-  const root = { e$, opts }
+  const root = { e$, req, opts }
 
   // create object constructors
   const types = _.mapValues
