@@ -66,7 +66,10 @@ class Band extends Radredis {
   @ args({ name: "string", rank: "integer", genres: [ "string" ] })
   @ description("Update band values")
   update({ name, rank, genres }) {
-    return this._update({ name, rank, genres })
+    this.setAttr('name', name)
+    this.setAttr('rank', rank)
+    this.setAttr('genres', genres)
+    return this._update()
   }
 
   @ mutation("Band")

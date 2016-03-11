@@ -71,6 +71,9 @@ export default function(source, schema, transforms = {}) {
     }
 
     attr(attr) {
+      // notice that null is not the same as undefined
+      if (this._attrs[attr] === null)
+        return null
       return this._attrs[attr]
         || ( this._attrs[attr] = this._src
                .attr(m, this._id, attr)
@@ -79,6 +82,8 @@ export default function(source, schema, transforms = {}) {
     }
 
     setAttr(attr, val) {
+      if (val === undefined)
+        return undefined
       return this._attrs[attr] = this.e$.setKey
         ( source._name
         , `${m}:${this._id}:${attr}`
@@ -86,21 +91,17 @@ export default function(source, schema, transforms = {}) {
         )
     }
 
-    _update(attrs) {
-      // remove undefined values
-      attrs = _(attrs).omitBy(p => _.isUndefined(p)).omit('id').value()
-      // update caches
-      _.forEach ( attrs , (val, attr) => this.setAttr(attr, val) )
-      // perform query
-      return Model.update(this._id, attrs)
-        // return self
-        .return(this)
-    }
-
     // resolve all fields (for doing better updates)
     _all() {
       return Promise.all( _.map(props, name => this.attr(name) ) )
         .then(attrs => _.zipObject(props, attrs))
+    }
+
+    _update() {
+      // perform query
+      return this._all()
+        .then(attrs => Model.update(this._id, attrs))
+        .return(this)
     }
 
     _delete() {

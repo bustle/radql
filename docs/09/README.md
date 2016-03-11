@@ -103,7 +103,10 @@ class Band extends Radredis {
   @ args({ name: "string", rank: "integer", genres: [ "string" ] })
   @ description("Update band values")
   update({ name, rank, genres }) {
-    return this._update({ name, rank, genres })
+    this.setAttr('name', name)
+    this.setAttr('rank', rank)
+    this.setAttr('genres', genres)
+    return this._update()
   }
 
   @ mutation("Band")
@@ -367,6 +370,7 @@ Let `Model` be be a `Radredis` model, `Radredis` be the result of calling `Type(
 - `Radredis.range(root, { index, min, max, offset, limit })` performs `Model.range({ index, min, max, offset, limit, properties: [ 'id' ] })`
 - `Radredis.create(root, attrs)` performs `Model.create(attrs)`
 - `this.attr(name)` returns a Promise that resolves to the value specified
+- `this.setAttr(name, val)` sets the local attribute and cached values
 - `this._id` returns the current id
 - `this._all()` returns all attributes, useful for running partial updates as radredis wants the complete model
 - `this._update(attrs)` performs `Model.update(this._id, attrs)` on the instance, and mutates `this.attrs`
