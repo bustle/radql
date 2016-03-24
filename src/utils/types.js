@@ -19,3 +19,12 @@ export class RadService {
     return this._name || this.name
   }
 }
+
+// @ field ( RadUnion[ "Post", "Type" ] )
+export function RadUnion(name, types) {
+  return { RadUnion: name, types }
+}
+
+export function RadInterface(name, fields) {
+  return { RadInterface: name, fields }
+}

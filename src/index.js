@@ -40,4 +40,6 @@ export { field
 export { RadAPI
        , RadType
        , RadService
+       , RadInterface
+       , RadUnion
        } from './utils/types'

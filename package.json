@@ -1,6 +1,6 @@
 {
   "name": "radql",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Opinionated, service-based, GraphQL infrastructure",
   "main": "lib/index.js",
   "scripts": {

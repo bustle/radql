@@ -4,6 +4,8 @@ import { throwError } from './utils'
 import { GraphQLSchema
        // type constructors
        , GraphQLObjectType
+       , GraphQLInterfaceType
+       , GraphQLUnionType
        , GraphQLScalarType
        , GraphQLList
        , GraphQLNonNull
@@ -33,9 +35,10 @@ export default function ( apis = [], types = [], services = [] ) {
   const registry =
 
     // type/service stores:
-    { services: {}
-    , types:    {}
-    , gql:      {}
+    { services:   {}
+    , types:      {}
+    , interfaces: {}
+    , gql:        {}
 
     // accessors
     , service
@@ -51,8 +54,14 @@ export default function ( apis = [], types = [], services = [] ) {
   // register services
   _.forEach ( services, registerService )
 
+  // handle unions and interfaces
+  const unions     = _.remove( types, 'RadUnion'     )
+  const interfaces = _.remove( types, 'RadInterface' )
+
   // register types
+  _.forEach ( interfaces, registerInterface )
   _.forEach ( _.concat( apis, types ), registerType )
+  _.forEach ( unions, registerUnion )
 
   // build schema from APIs
   registry.gqlSchema = Schema()
@@ -94,6 +103,8 @@ export default function ( apis = [], types = [], services = [] ) {
         return GraphQLInt
       case 'float': case 'number':
         return GraphQLFloat
+      case 'boolean': case 'bool':
+        return GraphQLBoolean
       case 'string':
         return GraphQLString
       case 'object':
@@ -137,6 +148,31 @@ export default function ( apis = [], types = [], services = [] ) {
     registry.services[name] = s
   }
 
+  function registerInterface(i) {
+    const { RadInterface: name, fields } = i
+    if (registry.types[name]) {
+      if (registry.types[name] === i)
+        return
+      else
+        throw new Error(`ERROR: The interface name "${name}" is already in use`)
+    }
+    registry.types[name] = i
+    const gqlInterface = new GraphQLInterfaceType
+      ( { name
+        , fields: () => _.mapValues
+            ( fields
+            , ({ type, args, description }) =>
+                ( { type: gqlType(type)
+                  , args: gqlParseArgs(args)
+                  , description
+                  }
+                )
+            )
+        }
+      )
+    registry.gql[name] = gqlInterface
+  }
+
   function registerType(t) {
     const { name, description } = t
     if (registry.types[name]) {
@@ -146,15 +182,33 @@ export default function ( apis = [], types = [], services = [] ) {
         throw new Error(`ERROR: The type name "${name}" is already in use`)
     }
     registry.types[name] = t
-    const gqlType = new GraphQLObjectType
+    const gqlObject = new GraphQLObjectType
       ( { name
         , description
         , fields: () => _.reduce
             ( t.prototype, gqlAddField, {} )
+        , interfaces: t.interfaces && _.map(t.interfaces, gqlType)
+        , isTypeOf: o => (o instanceof t)
         }
       )
-    registry.gql[name] = gqlType
+    registry.gql[name] = gqlObject
   }
+
+  function registerUnion(u) {
+    const { RadUnion: name, types } = u
+    if (registry.types[name]) {
+      if (registry.types[name] === u)
+        return
+      else
+        throw new Error(`ERROR: The union name "${name}" is already in use`)
+    }
+    registry.types[name] = u
+    const gqlUnion = new GraphQLUnionType
+      ( { name, types: _.map(types, gqlType) } )
+    registry.gql[name] = gqlUnion
+  }
+
+
 
   function Schema() {
 
