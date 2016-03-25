@@ -34,6 +34,7 @@ export { field
        , description
        , service
        , fetch
+       , delegate
        , decorates
        } from './utils/decorators'
 

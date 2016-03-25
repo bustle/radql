@@ -129,4 +129,58 @@ describe ('kitchen sink', function() {
 
   })
 
+  it ('should delegate fields', function() {
+    return check
+      ( serve
+      , `{
+          AnimalAPI {
+            dogName(name: "Sparky", nick: true)
+          }
+        }`
+      , { AnimalAPI:
+          { dogName: "Mr. Sparky"
+          }
+        }
+      )
+  })
+
+  it ('should delegate services', function() {
+    return check
+      ( serve
+      , `{
+          AnimalAPI {
+            hiss1: hiss
+            hiss5: hiss(amount: 5)
+          }
+        }`
+      , { AnimalAPI:
+          { hiss1: "hiss..."
+          , hiss5: "hiss... hiss... hiss... hiss... hiss..."
+          }
+        }
+      )
+  })
+
+  it ('should delegate mutations', function() {
+    return check
+      ( serve
+      , `mutation {
+          AnimalAPI__hissMore
+        }`
+      , { AnimalAPI__hissMore: 'hiss hiss hiss'
+        }
+      )
+  })
+
+  it ('should authenticate delegates', function() {
+    return check
+      ( serve
+      , `mutation {
+          AuthAPI__hissMore(foo: "test")
+        }`
+      , { AuthAPI__hissMore: null
+        }
+      )
+  })
+
 })

@@ -115,31 +115,6 @@ export default function ( apis = [], types = [], services = [] ) {
     }
   }
 
-  function gqlParseArgs(args) {
-    return args && _.mapValues
-      ( args
-      , arg =>
-        ( { type: gqlType(arg.type || arg)
-          , description: arg.description
-          }
-        )
-      )
-  }
-
-  function gqlAddField(fields, field, name) {
-    // ignore helpers, mutations, etc.
-    if (field.field) {
-      // create field
-      fields[name] =
-        { type:        gqlType(field.type)
-        , description: field.description
-        , args:        gqlParseArgs(field.args)
-        , resolve:     ( ctx, args ) =>
-                         ctx[name](args)
-        }
-    }
-    return fields
-  }
 
   // registration methods
 
@@ -255,35 +230,108 @@ export default function ( apis = [], types = [], services = [] ) {
 
     function apiMutations(fields, api) {
 
-      const baseArgs = gqlParseArgs(api.args)
-
       // add each mutation to the root mutation fields
       return _.reduce
         ( api.prototype
         , (fs, f, n) => {
             // ignore plain fields, helpers, etc.
             if (f.mutation) {
-              // get mutation args
-              const mArgs = gqlParseArgs(f.args)
-              // merge mutation args with api args
-              const args = baseArgs
-                ? _.assign({}, baseArgs, mArgs)
-                : mArgs
-              // create field
-              fs[`${api.name}__${n}`] =
-                { type:        gqlType(f.type)
-                , description: f.description
-                , args:        args
-                , resolve:     ( __, a, { rootValue: r } ) =>
-                                 r.e$[api.name](a)
-                                  .then(ctx => ctx[n](a))
-                }
+              let process = addMethod
+              if (f.delegates)
+                process = f.delegates.field
+                  ? delegateField
+                  : delegateService
+              process(fs, f, n, api)
             }
             return fs
           }
         , fields
         )
     }
+  }
+
+  // HELPERS
+
+  function gqlParseArgs(...a) {
+    return _({})
+      .assign(...a)
+      .mapValues(arg =>
+        ( { type: gqlType(arg.type || arg)
+          , description: arg.description
+          }
+        )
+      )
+      .value()
+  }
+
+  function wrapPre(pre, fn) {
+    return pre.name
+      ? ( __, args, { rootValue: r } ) =>
+          r.e$[pre.name](args)
+           .then(ctx => ctx && fn(ctx, args, r))
+      : ( ctx, args, { rootValue: r } ) =>
+           fn(ctx, args, r)
+  }
+
+  function delegateField(fields, def, name, pre = {}) {
+    const { to, field } = def.delegates
+    const t = registry.types[to]
+      || throwError(`Cannot delegate to type "${to}"`)
+    const f = t.prototype[field]
+    fields[pre.name ? `${pre.name}__${name}` : name] =
+      { type:        gqlType(f.type)
+      , description: f.description
+      , args:        gqlParseArgs(f.args, t.args, pre.args)
+      , resolve:     wrapPre
+                       ( pre
+                       , (__, args, r) =>
+                           r.e$[to](args)
+                             .then(obj => obj[field](args))
+                       )
+      }
+  }
+
+  function delegateService(fields, def, name, pre = {}) {
+    const { to, service } = def.delegates
+    const t = registry.types[to]
+      || throwError(`Cannot delegate to type "${to}"`)
+    const s = t[service]
+    fields[pre.name ? `${pre.name}__${name}` : name] =
+      { type         : gqlType(s.type)
+      , description  : s.description
+      , args         : gqlParseArgs(s.args, pre.args)
+      , resolve      : wrapPre
+                        ( pre
+                        , ( __, args, r ) =>
+                            r.e$[to][service](args)
+                        )
+      }
+  }
+
+  function addMethod(fields, field, name, pre = {}) {
+    fields[pre.name ? `${pre.name}__${name}` : name] =
+      { type         : gqlType(field.type)
+      , description  : field.description
+      , args         : gqlParseArgs(field.args, pre.args)
+      , resolve      : wrapPre
+                         ( pre
+                         , ( ctx, args ) =>
+                             ctx[name](args)
+                         )
+      }
+  }
+
+  function gqlAddField(fields, field, name) {
+    // ignore helpers, mutations, etc.
+    if (field.field) {
+      let process = addMethod
+      if (field.delegates)
+        process = field.delegates.field
+          ? delegateField
+          : delegateService
+      process(fields, field, name)
+    }
+    return fields
   }
 }
 

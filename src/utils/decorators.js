@@ -69,6 +69,19 @@ export function fetch (target, name, descriptor) {
   return descriptor
 }
 
+export function delegate(f) {
+  return function(target, name, descriptor) {
+    const fn = descriptor.value
+    descriptor.value = { delegates: fn() }
+    if (f === "field")
+      descriptor.value.field = true
+    if (f === "mutation")
+      descriptor.value.mutation = true
+    descriptor.enumerable = true
+    return descriptor
+  }
+}
+
 export function decorates(fn) {
   return function (target, name, descriptor) {
     const res = descriptor.value

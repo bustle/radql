@@ -2,9 +2,11 @@ import RadQL from '../../src'
 
 import { field
        , mutation
+       , service
        , type
        , args
        , description
+       , delegate
 
        , RadAPI
        , RadType
@@ -13,6 +15,23 @@ import { field
        , RadInterface
 
        } from '../../src'
+
+class AuthAPI extends RadAPI {
+
+  static args = { foo: "string!" }
+  static get() {
+    return null
+  }
+
+  @ delegate("field")
+  dogName() { return { to: "Dog", field: "name" } }
+
+  @ delegate("mutation")
+  hissMore() {
+    return { to: "Snek", field: "hissMore" }
+  }
+
+}
 
 class API extends RadAPI {
 
@@ -78,6 +97,16 @@ class AnimalAPI extends RadAPI {
            ]
   }
 
+  @ delegate("field")
+  dogName() { return { to: "Dog", field: "name" } }
+
+  @ delegate("field")
+  hiss()    { return { to: "Snek", service: "HaaS" } }
+
+  @ delegate("mutation")
+  hissMore() {
+    return { to: "Snek", field: "hissMore" }
+  }
 }
 
 class Dog extends RadType {
@@ -144,9 +173,24 @@ class Cat extends RadType {
 
 class Snek extends RadType {
 
+  @ service
+  @ type("string")
+  @ args({ amount: "integer" })
+  static HaaS(root, { amount = 1 }) {
+    let hiss = "hiss..."
+    for (let i = 1; i < amount; i++)
+      hiss += " hiss..."
+    return hiss
+  }
+
   @ field("string")
   hiss() {
-     return "i am a snek"
+    return "i am a snek"
+  }
+
+  @ mutation("string")
+  hissMore() {
+    return "hiss hiss hiss"
   }
 
 }
@@ -160,7 +204,7 @@ const Pet = RadInterface
     }
   )
 
-const APIs = [ API, AnimalAPI ]
+const APIs = [ API, AnimalAPI, AuthAPI ]
 const Types = [ Animal, Pet, Dog, Cat, Snek ]
 const Services = [  ]
 
