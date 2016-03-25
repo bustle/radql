@@ -183,4 +183,15 @@ describe ('kitchen sink', function() {
       )
   })
 
+  it ('should implement a secret store', function() {
+    return check
+      ( serve
+      , `mutation {
+          AuthAPI__hissMore(foo: "My Super Secret")
+        }`
+      , { AuthAPI__hissMore: "hiss off!"
+        }
+      )
+  })
+
 })

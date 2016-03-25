@@ -8,6 +8,9 @@ export default function(registry, req, opts = {}) {
   // number of round trips
   let rtCount = 0
 
+  // state store
+  const state = {}
+
   // promise store
   const cache = {}
 
@@ -31,6 +34,10 @@ export default function(registry, req, opts = {}) {
         return cache[r.src.constructor.__name][r.key]
           || ( cache[r.src.constructor.__name][r.key] = enqueue(r) )
       }
+
+    // STATE STORE
+    , get:  key         => state[key]
+    , set: (key, value) => state[key] = value
 
     // CONVENIENCE METHODS
     , all: rs => Promise.all(_.map(rs, e$.fetch))

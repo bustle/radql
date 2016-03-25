@@ -16,11 +16,20 @@ import { field
 
        } from '../../src'
 
+function authorize(secret) {
+  if (secret === "My Super Secret")
+    return Promise.resolve(secret)
+  else
+    return Promise.reject("Wrong secret!")
+}
 class AuthAPI extends RadAPI {
 
   static args = { foo: "string!" }
-  static get() {
-    return null
+  static get(root, { foo }) {
+    return authorize(foo)
+      .then(secret => root.e$.set('secret', secret))
+      .then(secret => new this(root))
+      .catch(error => null)
   }
 
   @ delegate("field")
@@ -190,6 +199,8 @@ class Snek extends RadType {
 
   @ mutation("string")
   hissMore() {
+    if (this.e$.get('secret'))
+      return "hiss off!"
     return "hiss hiss hiss"
   }
 
