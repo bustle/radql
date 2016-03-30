@@ -55,7 +55,8 @@ export default function(source, schema, transforms = {}) {
     static get(root, { id }) {
       return root.e$[source._name]
         .attr(m, id, 'id')
-        .then(id => id && new this(root, { id }))
+        .then(exists => exists || Promise.reject(`${type}:${id} not found`))
+        .then(exists => new this(root, { id }))
     }
 
     static all(root, { index = 'id', limit = 30, offset = 0 } = {}) {
