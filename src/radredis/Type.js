@@ -55,7 +55,7 @@ export default function(source, schema, transforms = {}) {
     static get(root, { id }) {
       return root.e$[source._name]
         .attr(m, id, 'id')
-        .then(exists => exists || Promise.reject({ code: 404, message: `Cannot find radredis model ${title}:${id}` }))
+        .then(exists => exists || Promise.reject(`ERROR 404: Cannot find radredis model ${title}:${id}`))
         .then(exists => new this(root, { id }))
     }
 
