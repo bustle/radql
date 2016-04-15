@@ -1,18 +1,18 @@
 {
   "name": "radql",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Opinionated, service-based, GraphQL infrastructure",
   "main": "lib/index.js",
   "scripts": {
-    "doc1":  "babel-node docs/01/index.js --express",
-    "doc2":  "babel-node docs/02/index.js --express",
-    "doc3":  "babel-node docs/03/index.js --express",
-    "doc4":  "babel-node docs/04/index.js --express",
-    "doc5":  "babel-node docs/05/index.js --express",
-    "doc6":  "babel-node docs/06/index.js --express",
-    "doc7":  "babel-node docs/07/index.js --express",
-    "doc8":  "babel-node docs/08/index.js --express",
-    "doc9":  "babel-node docs/09/index.js --express",
+    "doc1": "babel-node docs/01/index.js --express",
+    "doc2": "babel-node docs/02/index.js --express",
+    "doc3": "babel-node docs/03/index.js --express",
+    "doc4": "babel-node docs/04/index.js --express",
+    "doc5": "babel-node docs/05/index.js --express",
+    "doc6": "babel-node docs/06/index.js --express",
+    "doc7": "babel-node docs/07/index.js --express",
+    "doc8": "babel-node docs/08/index.js --express",
+    "doc9": "babel-node docs/09/index.js --express",
     "doc10": "babel-node docs/10/index.js --express",
     "doc11": "babel-node docs/11/index.js --express",
     "compile": "babel -d lib/ src/",
@@ -22,22 +22,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jqyu/radql.git"
+    "url": "git+https://github.com/bustlelabs/radql.git"
   },
   "author": "James Yu",
   "license": "WTFPL",
   "bugs": {
-    "url": "https://github.com/jqyu/radql/issues"
+    "url": "https://github.com/bustlelabs/radql/issues"
   },
-  "homepage": "https://github.com/jqyu/radql#readme",
+  "homepage": "https://github.com/bustlelabs/radql#readme",
   "dependencies": {
-    "bluebird": "^3.3.3",
-    "lodash": "^4.5.1"
+    "babel-cli": "^6.7.5",
+    "babel-core": "^6.7.6",
+    "bluebird": "^3.3.5",
+    "lodash": "^4.11.1"
   },
   "peerDependencies": {
-    "ioredis": "^1.15.1",
+    "ioredis": "^2.0.0-rc2",
     "graphql": "^0.4.18",
-    "radredis": "^0.1.0"
+    "radredis": "^0.1.2"
   },
   "devDependencies": {
     "babel-cli": "^6.6.0",
@@ -51,9 +53,9 @@
     "express": "^4.13.4",
     "express-graphql": "^0.4.9",
     "graphql": "^0.4.18",
-    "ioredis": "^1.15.1",
+    "ioredis": "^2.0.0-rc2",
     "lodash": "^4.5.1",
     "mocha": "^2.4.5",
-    "radredis": "^0.1.0"
+    "radredis": "^0.1.2"
   }
 }
